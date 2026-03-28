@@ -1,0 +1,126 @@
+/* App-specific styles */
+
+/* Smooth scrolling for the entire page */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Ensure sections stack properly */
+main > div {
+  position: relative;
+}
+
+/* Custom selection color */
+::selection {
+  background: rgba(46, 92, 255, 0.3);
+  color: #F5F7FF;
+}
+
+/* Focus styles for accessibility */
+*:focus-visible {
+  outline: 2px solid #2E5CFF;
+  outline-offset: 2px;
+}
+
+/* Button hover transitions */
+button {
+  transition: all 0.2s ease;
+}
+
+/* Card hover lift effect */
+.card-hover {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card-hover:hover {
+  transform: translateY(-4px);
+}
+
+/* Gradient text animation */
+@keyframes gradient-shift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.animated-gradient {
+  background-size: 200% 200%;
+  animation: gradient-shift 3s ease infinite;
+}
+
+/* Pulse animation for live indicators */
+@keyframes pulse-dot {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.pulse-dot {
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+/* Stagger animation delays */
+.stagger-1 { animation-delay: 0.1s; }
+.stagger-2 { animation-delay: 0.2s; }
+.stagger-3 { animation-delay: 0.3s; }
+.stagger-4 { animation-delay: 0.4s; }
+.stagger-5 { animation-delay: 0.5s; }
+
+/* Hide scrollbar but keep functionality */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Glass morphism effect */
+.glass-effect {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Neon glow effects */
+.neon-glow-blue {
+  box-shadow: 0 0 20px rgba(46, 92, 255, 0.5),
+              0 0 40px rgba(46, 92, 255, 0.3),
+              0 0 60px rgba(46, 92, 255, 0.1);
+}
+
+.neon-glow-violet {
+  box-shadow: 0 0 20px rgba(162, 89, 255, 0.5),
+              0 0 40px rgba(162, 89, 255, 0.3),
+              0 0 60px rgba(162, 89, 255, 0.1);
+}
+
+/* Responsive typography */
+@media (max-width: 640px) {
+  .font-heading {
+    letter-spacing: -0.02em;
+  }
+}
+
+/* Reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  html {
+    scroll-behavior: auto;
+  }
+}
