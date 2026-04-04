@@ -155,7 +155,7 @@ export default function Hero() {
           {/* Left: Image */}
           <div className="w-[55%] h-full relative">
             <img 
-              src="/hero_student.jpg" 
+              src="/masterminds/hero_student.jpg" 
               alt="Student studying"
               className="w-full h-full object-cover"
             />
