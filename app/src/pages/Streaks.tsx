@@ -106,8 +106,18 @@ export default function Streaks() {
       <main className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Header */}
         <div className="mb-12">
-          <h1 className="text-4xl font-bold mb-2">Your Learning Streaks</h1>
-          <p className="text-white/60">Keep your momentum going and maintain your learning streaks</p>
+          <div className="flex items-center justify-between mb-2">
+            <h1 className="text-4xl font-bold">Your Learning Streaks</h1>
+            <Button
+               onClick={refreshStreakData}
+               variant="outline"
+               size="sm"
+               className="border-white/[0.2] hover:bg-white/[0.1] text-sm"
+            >
+               🔄 Refresh
+             </Button>
+           </div>
+           <p className="text-white/60">Keep your momentum going and maintain your learning streaks</p>
         </div>
 
         {/* Stats Grid */}
