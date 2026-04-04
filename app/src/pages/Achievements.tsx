@@ -163,7 +163,7 @@ export default function Achievements() {
                 <span>{user?.name || 'Student'} (Lvl {user?.level || 1})</span>
             </div>
             </div>
-            <button
+            <Button
               onClick={handleLogout}
                 variant="ghost"
                 size="sm"
@@ -171,7 +171,7 @@ export default function Achievements() {
             >
               <LogOut className="w-4 h-4" />
               Logout
-            </button>
+            </Button>
           </div>
         </div>
       </nav>
