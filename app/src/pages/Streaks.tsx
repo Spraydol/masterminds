@@ -90,7 +90,7 @@ export default function Streaks() {
             <div className="ml-4 flex items-center gap-2 text-sm text-white/60 border-l border-white/20 pl-4">
               <span>{user?.name || 'Student'}</span>
             </div>
-            <button
+            <Button
               onClick={handleLogout}
                 variant="ghost"
                 size="sm"
@@ -98,7 +98,7 @@ export default function Streaks() {
             >
               <LogOut className="w-4 h-4" />
               Logout
-            </button>
+            </Button>
           </div>
         </div>
       </nav>
