@@ -157,7 +157,11 @@ export default function Achievements() {
               <div className="flex items-center gap-2">
                 <Trophy className="w-6 h-6 text-yellow-400" />
                 <span className="text-xl font-bold">Achievements</span>
-              </div>
+              </div> 
+              <div className="ml-6 flex items-center gap-2 text-sm text-white/60 border-l border-white/20 pl-4">
+                <Users className="w-4 h-4" />
+                <span>{user?.name || 'Student'} (Lvl {user?.level || 1})</span>
+            </div>
             </div>
             <button
               onClick={handleLogout}
