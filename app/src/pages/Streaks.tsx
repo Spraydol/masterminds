@@ -31,6 +31,18 @@ export default function Streaks() {
     localStorage.removeItem('edubuddy_user');
     navigate('/');
   };
+  
+  const refreshStreakData = () => {
+    // Simulate fetching updated streak data
+      const updatedData = {
+        currentStreak: streakData.currentStreak + (Math.random() > 0.7 ? 1 : 0),
+        longestStreak: Math.max(streakData.longestStreak, streakData.currentStreak),
+        totalDaysActive: streakData.totalDaysActive + (Math.random() > 0.5 ? 1 : 0),
+        thisWeek: Math.min(7, streakData.thisWeek + (Math.random() > 0.8 ? 1 : 0)),
+        thisMonth: Math.min(30, streakData.thisMonth + (Math.random() > 0.9 ? 1 : 0)),
+      };
+      setStreakData(updatedData);
+  };
 
   // Generate calendar data for the last 12 weeks
   const generateCalendarData = () => {
@@ -75,9 +87,14 @@ export default function Streaks() {
                 <span className="text-xl font-bold">Streaks</span>
               </div>
             </div>
+            <div className="ml-4 flex items-center gap-2 text-sm text-white/60 border-l border-white/20 pl-4">
+              <span>{user?.name || 'Student'}</span>
+            </div>
             <button
               onClick={handleLogout}
-              className="flex items-center gap-2 px-4 py-2 text-sm rounded-lg bg-white/[0.05] hover:bg-white/[0.1] transition"
+                variant="ghost"
+                size="sm"
+                className="flex items-center gap-2"
             >
               <LogOut className="w-4 h-4" />
               Logout
