@@ -9,7 +9,7 @@ import { Card } from '@/components/ui/card';
 
 export default function Achievements() {
   const navigate = useNavigate();
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<any>({ name: 'Student', level: 1 });
 
   useEffect(() => {
     const userData = localStorage.getItem('edubuddy_user');
