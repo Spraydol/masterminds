@@ -165,7 +165,9 @@ export default function Achievements() {
             </div>
             <button
               onClick={handleLogout}
-              className="flex items-center gap-2 px-4 py-2 text-sm rounded-lg bg-white/[0.05] hover:bg-white/[0.1] transition"
+                variant="ghost"
+                size="sm"
+                className="flex items-center gap-2"
             >
               <LogOut className="w-4 h-4" />
               Logout
@@ -205,6 +207,7 @@ export default function Achievements() {
             <div className="flex items-center justify-between mb-4">
               <span className="text-white/60 text-sm">Completion</span>
               <Award className="w-5 h-5 text-purple-400" />
+              <Target className="w-4 h-4 text-white/40" />
             </div>
             <div className="text-4xl font-bold">{Math.round((unlockedCount / achievements.length) * 100)}%</div>
             <div className="w-full bg-gray-700 rounded-full h-2 mt-3">
@@ -222,12 +225,13 @@ export default function Achievements() {
             <button
               key={category}
               onClick={() => setSelectedCategory(category)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-1.5 ${
                 selectedCategory === category
                   ? 'bg-gradient-accent text-white'
                   : 'bg-white/[0.05] text-white/60 hover:bg-white/[0.1]'
               }`}
             >
+              {category === 'Learning' && <BookOpen className="w-3.5 h-3.5" />}
               {category}
             </button>
           ))}
