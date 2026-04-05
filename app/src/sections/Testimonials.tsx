@@ -16,14 +16,14 @@ const testimonials = [
   {
     quote: "Exams feel less scary now.",
     author: "Past papers + corrections = confidence.",
-    image: "/testimonial_2.jpg",
+    image: "/masterminds/testimonial_2.jpg",
     name: "Maria K.",
     role: "Medical Student",
   },
   {
     quote: "The community helps instantly.",
     author: "I ask at midnight and get answers.",
-    image: "/testimonial_3.jpg",
+    image: "/masterminds/testimonial_3.jpg",
     name: "James L.",
     role: "Computer Science",
   },
