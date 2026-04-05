@@ -98,7 +98,7 @@ export default function AllInOne() {
       >
         {/* Background image */}
         <img 
-          src="/platform_student.jpg" 
+          src="/masterminds/platform_student.jpg" 
           alt="Student working"
           className="absolute inset-0 w-full h-full object-cover"
         />
