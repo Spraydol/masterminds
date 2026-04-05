@@ -196,7 +196,7 @@ export default function Hero() {
         {/* Streak badge */}
         <div 
           ref={badgeRef}
-          className="absolute right-[6%] top-[12%] w-[140px] h-[140px] rounded-full flex flex-col items-center justify-center"
+          className="absolute right-[2%] top-[5%] w-[140px] h-[140px] rounded-full flex flex-col items-center justify-center"
           style={{
             background: 'linear-gradient(135deg, #0B0E14, #121A2B)',
             border: '2px solid transparent',
