@@ -9,7 +9,7 @@ const testimonials = [
   {
     quote: "I finally understand calculus.",
     author: "The explanations feel like a friend teaching me.",
-    image: "/testimonial_1.jpg",
+    image: "/masterminds/testimonial_1.jpg",
     name: "Alex M.",
     role: "Engineering Student",
   },
