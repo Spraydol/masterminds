@@ -16,3 +16,7 @@ dependencies = [
     "Werkzeug==3.0.1",
     "PyPDF2==3.0.1",
 ]
+
+[tool.setuptools.packages.find]
+include = ["*"]
+exclude = ["static*", "uploads*", "instance*"]
