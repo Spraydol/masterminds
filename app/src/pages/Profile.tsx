@@ -2,12 +2,11 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Camera, Save, X, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { authAPI } from '@/services/api';
+import { API_URL } from '@/services/api';
 
 export default function Profile() {
   const navigate = useNavigate();
   const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -72,8 +71,8 @@ export default function Profile() {
         formDataToSend.append('profile_picture', formData.profilePicture);
       }
 
-      // Call API to update profile
-      const response = await fetch(`${authAPI.BASE_URL.replace('/api', '')}/api/auth/update-profile`, {
+      // Call API to update profile using API_URL constant
+      const response = await fetch(`${API_URL}/api/auth/update-profile`, {
         method: 'POST',
         body: formDataToSend,
       });
