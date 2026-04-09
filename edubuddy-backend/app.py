@@ -121,6 +121,15 @@ class ChatMessage(db.Model):
     response = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+class ActivityLog(db.Model):
+    """Track user activity for streak calculations"""
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    activity_type = db.Column(db.String(50), nullable=False)  # login, upload, chat, study
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    
+    user = db.relationship('User', backref='activities')
+
 # Create tables
 with app.app_context():
     db.create_all()
@@ -325,6 +334,97 @@ Could you provide more details about what you're studying? For example:
 
 This will help me give you a more targeted and helpful explanation. 📚✨"""
 
+
+def get_user_activities(user_id):
+    """Get all user activities from database for streak calculation"""
+    activities = ActivityLog.query.filter_by(user_id=user_id).order_by(
+        ActivityLog.created_at.desc()
+    ).all()
+    return activities
+
+
+def log_user_activity(user_id, activity_type='study'):
+    """Log a user activity for streak tracking"""
+    activity = ActivityLog(user_id=user_id, activity_type=activity_type)
+    db.session.add(activity)
+    db.session.commit()
+
+
+def calculate_streak_data(user_id):
+    """Calculate streak statistics from user activities in the database"""
+    # Get all activities for the user
+    activities = get_user_activities(user_id)
+    
+    if not activities:
+        return {
+            'currentStreak': 0,
+            'longestStreak': 0,
+            'totalDays': 0,
+            'thisWeek': 0,
+            'thisMonth': 0
+        }
+    
+    now = datetime.utcnow()
+    today = now.date()
+    
+    # Extract unique dates from activities (convert to naive UTC date)
+    active_dates = set()
+    for activity in activities:
+        # Convert timestamp to naive UTC object (strip timezone info if present)
+        activity_date = activity.created_at.replace(tzinfo=None).date()
+        active_dates.add(activity_date)
+    
+    # Calculate current streak (consecutive days ending today or yesterday)
+    current_streak = 0
+    check_date = today
+    
+    # Check if user was active today or yesterday to start counting
+    if today not in active_dates and (today - timedelta(days=1)) not in active_dates:
+        current_streak = 0
+    else:
+        # Start from today or yesterday and count backwards
+        if today not in active_dates:
+            check_date = today - timedelta(days=1)
+        
+        while check_date in active_dates:
+            current_streak += 1
+            check_date -= timedelta(days=1)
+    
+    # Calculate longest streak
+    longest_streak = 0
+    temp_streak = 0
+    
+    # Sort dates and iterate to find longest consecutive sequence
+    sorted_dates = sorted(active_dates, reverse=True)
+    for i, date in enumerate(sorted_dates):
+        if i == 0:
+            temp_streak = 1
+        else:
+            if sorted_dates[i-1] - date == timedelta(days=1):
+                temp_streak += 1
+            else:
+                temp_streak = 1
+        longest_streak = max(longest_streak, temp_streak)
+    
+    # Calculate total days active
+    total_days_active = len(active_dates)
+    
+    # Calculate this week's activity
+    week_start = today - timedelta(days=today.weekday())
+    this_week = sum(1 for d in active_dates if week_start <= d <= today)
+    
+    # Calculate this month's activity
+    month_start = today.replace(day=1)
+    this_month = sum(1 for d in active_dates if month_start <= d <= today)
+    
+    return {
+        'currentStreak': current_streak,
+        'longestStreak': longest_streak,
+        'totalDays': total_days_active,
+        'thisWeek': this_week,
+        'thisMonth': this_month
+    }
+
 # ==================== API ROUTES ====================
 
 # Health check
@@ -524,6 +624,9 @@ def login():
     if not user:
         return jsonify({'success': False, 'message': 'User not found'}), 404
     
+    # Log activity for login
+    log_user_activity(user.id, 'login')
+    
     return jsonify({
         'success': True,
         'user': {
@@ -571,60 +674,24 @@ def get_user_stats():
     if not user:
         return jsonify({'success': False, 'message': 'User not found'}), 404
     
-    now = datetime.utcnow()
-    today = now.date()
+    # Use the new calculate_streak_data function which queries ActivityLog table
+    stats = calculate_streak_data(user_id)
     
-    # Calculate current streak
-    current_streak = 0
-    if user.last_study_date:
-        last_date = user.last_study_date.date()
-        if last_date == today:
-            current_streak = user.streak_days
-        elif last_date == today - timedelta(days=1):
-            current_streak = user.streak_days
-        else:
-            current_streak = 0
+    # Update user's streak_days and last_study_date based on calculated data
+    if stats['currentStreak'] > 0:
+        user.streak_days = stats['currentStreak']
+        # Get the most recent activity to update last_study_date
+        latest_activity = ActivityLog.query.filter_by(user_id=user_id).order_by(
+            ActivityLog.created_at.desc()
+        ).first()
+        if latest_activity:
+            user.last_study_date = latest_activity.created_at
     
-    # Calculate longest streak (for simplicity, use stored streak_days as base)
-    longest_streak = max(user.streak_days, current_streak)
-    
-    # Calculate total days active (approximate based on account age and activity)
-    account_age_days = (today - user.created_at.date()).days
-    total_days_active = min(account_age_days, user.streak_days + random.randint(10, 50))
-    
-    # Calculate this week's activity
-    week_start = today - timedelta(days=today.weekday())
-    this_week = 0
-    for i in range(7):
-        day = week_start + timedelta(days=i)
-        if day <= today:
-            # Simulate activity based on user's streak pattern
-            if user.streak_days > 0 and random.random() > 0.2:
-                this_week += 1
-    
-    # Calculate this month's activity
-    month_start = today.replace(day=1)
-    this_month = 0
-    days_in_month = (month_start + timedelta(days=32)).replace(day=1) - month_start
-    for i in range(days_in_month.days):
-        day = month_start + timedelta(days=i)
-        if day <= today:
-            if user.streak_days > 0 and random.random() > 0.3:
-                this_month += 1
-    
-    # Ensure values are reasonable
-    this_week = min(this_week, (today - week_start).days + 1)
-    this_month = min(this_month, today.day)
+    db.session.commit()
     
     return jsonify({
         'success': True,
-        'stats': {
-            'currentStreak': current_streak,
-            'longestStreak': longest_streak,
-            'totalDays': total_days_active,
-            'thisWeek': this_week,
-            'thisMonth': this_month
-        }
+        'stats': stats
     })
 
 # ==================== DOCUMENT ROUTES ====================
@@ -674,6 +741,9 @@ def upload_document():
     
     # Award points for uploading (100 points per upload)
     user.points += 100
+    
+    # Log activity for upload
+    log_user_activity(user_id, 'upload')
     
     db.session.commit()
     
@@ -879,6 +949,11 @@ def ai_chat():
         response=response
     )
     db.session.add(chat)
+    
+    # Log activity for chat/study
+    if user_id:
+        log_user_activity(user_id, 'chat')
+    
     db.session.commit()
     
     return jsonify({
