@@ -26,6 +26,7 @@ import Community from './pages/Community';
 import Chat from './pages/Chat';
 import Streaks from './pages/Streaks';
 import Achievements from './pages/Achievements';
+import Profile from './pages/Profile';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -108,7 +109,7 @@ function ScrollToTop() {
 
 function App() {
   return (
-    <Router basename="/masterminds">
+    <Router>
       <ScrollToTop />
       <Routes>
         <Route path="/" element={<LandingPage />} />
@@ -120,6 +121,7 @@ function App() {
         <Route path="/chat" element={<Chat />} />
         <Route path="/streaks" element={<Streaks />} />
         <Route path="/achievements" element={<Achievements />} />
+        <Route path="/profile" element={<Profile />} />
       </Routes>
     </Router>
   );
