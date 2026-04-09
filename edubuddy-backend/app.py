@@ -12,6 +12,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__, static_folder='../app/dist', static_url_path='/')
+CORS(app)  # Enable CORS for all routes
 
 @app.route('/')
 def serve_index():
