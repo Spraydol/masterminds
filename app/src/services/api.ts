@@ -1,6 +1,8 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5000/api';
+// Use the public GitHub Codespaces URL for the backend service
+// Format: https://<port>-<your-codespace-id>.app.github.dev
+const API_URL = 'https://5000-opulent-space-dollop-qwxxj6r77qr2445q-5000.app.github.dev';
 
 const api = axios.create({
   baseURL: API_URL,
