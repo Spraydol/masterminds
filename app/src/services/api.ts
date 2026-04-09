@@ -5,7 +5,7 @@ import axios from 'axios';
 export const API_URL = 'https://5000-opulent-space-dollop-qwxxj6r77qr2445q-5000.app.github.dev';
 
 const api = axios.create({
-  baseURL: API_URL,
+  baseURL: `${API_URL}/api`,
   headers: {
     'Content-Type': 'application/json',
   },

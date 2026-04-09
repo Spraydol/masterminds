@@ -19,7 +19,7 @@ DIST_DIR = os.path.join(BASE_DIR, '..', 'app', 'dist')
 
 # ✅ Fix 2: Update Flask init with correct static config
 app = Flask(__name__, static_folder=DIST_DIR, static_url_path='')
-CORS(app, origins=['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:5174', 'http://127.0.0.1:5174', 'http://localhost:5175', 'http://127.0.0.1:5175'])  # Enable CORS for frontend
+CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)  # Enable CORS for frontend (all origins for /api routes)
 
 # ✅ Fix 3: Correct route syntax - use <path:filename> NOT [path:path]
 
