@@ -1,73 +1,60 @@
+```
 # Dependencies
+node_modules/
+
+# Build artifacts
+app/dist/
+app/build/
+app/.vite/
+app/.svelte-kit/
+app/.output/
+
+# Environment variables
+.env
+.env.local
+.env.*
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*.tmp
+
+# Logs
+*.log
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Coverage
+coverage/
+htmlcov/
+.coverage
+
+# Python cache
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 .Python
-
-# Virtual environments
-env/
-venv/
-ENV/
-.venv/
-
-# Environment variables (keep .env files private)
-.env
-.env.local
-.env.*
-.envrc
-.env.backup
-.env.save
-.env.dev
-.env.development
-.env.prod
-.env.production
-.env.test
-.env.testing
-.env.staging
-.env.preview
-
-# Python version
-.python-version
-
-# Testing & Coverage
-.tox/
-.coverage
-.coverage.*
 .pytest_cache/
 .mypy_cache/
-.hypothesis/
-coverage/
-htmlcov/
 
-# Build artifacts
-dist/
-build/
-*.egg
-*.egg-info/
-.installed.cfg
-.pip-tools.lock
-requirements.txt.bak
-requirements-dev.txt.bak
-poetry.lock
-Pipfile.lock
+# Node.js
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# Editor & IDE files
-.vscode/
-.idea/
-*.log
-*.tmp
-*.rej
-*.orig
-*.bak
-*.swp
-*.swo
-*~
-
-# OS files
-.DS_Store
-Thumbs.db
-
-# Cache
-.cache
+# Distribution / packaging
+.pybuild/
+.tox/
 .eggs/
+*.egg
+
+# Static assets that might be built
+edubuddy-backend/static/assets/
+edubuddy-backend/static/masterminds/assets/
+
+```

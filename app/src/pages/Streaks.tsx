@@ -6,17 +6,19 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import api from '@/services/api';
 
 export default function Streaks() {
   const navigate = useNavigate();
   const [user, setUser] = useState<any>(null);
   const [streakData, setStreakData] = useState({
-    currentStreak: 12,
-    longestStreak: 45,
-    totalDaysActive: 89,
-    thisWeek: 6,
-    thisMonth: 24,
+    currentStreak: 0,
+    longestStreak: 0,
+    totalDaysActive: 0,
+    thisWeek: 0,
+    thisMonth: 0,
   });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const userData = localStorage.getItem('edubuddy_user');
@@ -24,24 +26,41 @@ export default function Streaks() {
       navigate('/login');
       return;
     }
-    setUser(JSON.parse(userData));
+    const parsedUser = JSON.parse(userData);
+    setUser(parsedUser);
+    loadStreakData(parsedUser.id);
   }, [navigate]);
+
+  const loadStreakData = async (userId: number) => {
+    try {
+      setLoading(true);
+      const response = await api.get(`/user/stats?user_id=${userId}`);
+      if (response.data.success) {
+        const stats = response.data.stats;
+        setStreakData({
+          currentStreak: stats.currentStreak,
+          longestStreak: stats.longestStreak,
+          totalDaysActive: stats.totalDays,
+          thisWeek: stats.thisWeek,
+          thisMonth: stats.thisMonth,
+        });
+      }
+    } catch (error) {
+      console.error('Error loading streak data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('edubuddy_user');
     navigate('/');
   };
   
-  const refreshStreakData = () => {
-    // Simulate fetching updated streak data
-      const updatedData = {
-        currentStreak: streakData.currentStreak + (Math.random() > 0.7 ? 1 : 0),
-        longestStreak: Math.max(streakData.longestStreak, streakData.currentStreak),
-        totalDaysActive: streakData.totalDaysActive + (Math.random() > 0.5 ? 1 : 0),
-        thisWeek: Math.min(7, streakData.thisWeek + (Math.random() > 0.8 ? 1 : 0)),
-        thisMonth: Math.min(30, streakData.thisMonth + (Math.random() > 0.9 ? 1 : 0)),
-      };
-      setStreakData(updatedData);
+  const handleRefresh = () => {
+    if (user) {
+      loadStreakData(user.id);
+    }
   };
 
   // Generate calendar data for the last 12 weeks
@@ -109,12 +128,13 @@ export default function Streaks() {
           <div className="flex items-center justify-between mb-2">
             <h1 className="text-4xl font-bold">Your Learning Streaks</h1>
             <Button
-               onClick={refreshStreakData}
+               onClick={handleRefresh}
                variant="outline"
                size="sm"
                className="border-white/[0.2] hover:bg-white/[0.1] text-sm"
+               disabled={loading}
             >
-               🔄 Refresh
+               {loading ? '⏳ Loading...' : '🔄 Refresh'}
              </Button>
            </div>
            <p className="text-white/60">Keep your momentum going and maintain your learning streaks</p>

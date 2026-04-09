@@ -1,0 +1,6 @@
+pyproject.toml
+edubuddy.egg-info/PKG-INFO
+edubuddy.egg-info/SOURCES.txt
+edubuddy.egg-info/dependency_links.txt
+edubuddy.egg-info/requires.txt
+edubuddy.egg-info/top_level.txt
