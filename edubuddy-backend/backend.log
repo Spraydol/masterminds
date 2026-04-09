@@ -12,3 +12,12 @@ Press CTRL+C to quit
 /workspace/edubuddy-backend/app.py:451: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
   expires_at = datetime.utcnow() + timedelta(minutes=10)
 127.0.0.1 - - [09/Apr/2026 16:03:36] "POST /api/auth/send-code HTTP/1.1" 200 -
+ * Detected change in '/workspace/edubuddy-backend/app.py', reloading
+
+==================================================
+VERIFICATION CODE for test@university.edu: 290599
+==================================================
+
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 610-418-319
