@@ -2,10 +2,31 @@
 # Dependencies
 node_modules/
 
-# Build artifacts
+# Build outputs
 dist/
 build/
-target/
+*.js.map
+*.ts.map
+
+# Environment variables
+.env
+.env.local
+*.env.*
+
+# Editor/IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*.tmp
+
+# Logs
+*.log
+
+# Coverage
+coverage/
+htmlcov/
+.coverage
 
 # Python
 __pycache__/
@@ -13,40 +34,293 @@ __pycache__/
 *.pyo
 *.pyd
 .Python
-env/
-venv/
-.venv/
-.ENV
-.env
-.env.*
-.env.local
+*.so
+.Python
+*.egg-info/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.tox/
+.hypothesis/
 
-# Logs
-*.log
+# Node.js
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# Coverage
-.coverage
-coverage/
-htmlcov/
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*.tmp
-
-# OS
+# OS generated files
 .DS_Store
 Thumbs.db
 
-# Compressed
+# Temporary files
+*.tmp
+*.temp
+*.bak
+
+# Archives
 *.zip
-*.gz
-*.tar
-*.tgz
-*.bz2
-*.xz
+*.tar.gz
+*.tar.bz2
+*.tar.xz
 *.7z
 *.rar
+*.gz
+*.bz2
+*.xz
+*.zst
+
+# Compiled binaries
+*.exe
+*.dll
+*.so
+*.dylib
+*.class
+*.o
+*.obj
+*.a
+*.lib
+*.out
+
+# Java/Gradle
+target/
+.gradle/
+build/
+*.class
+*.jar
+*.war
+*.ear
+
+# Go
+*.exe
+*.dll
+*.so
+*.dylib
+*.test
+*.prof
+
+# C/C++
+*.o
+*.obj
+*.a
+*.lib
+*.so
+*.dylib
+*.dll
+*.exe
+*.out
+*.app
+*.bin
+
+# Rust
+target/
+*.so
+*.dylib
+*.dll
+*.exe
+*.lib
+
+# Ruby
+*.gem
+.bundle/
+vendor/bundle/
+.ruby-version
+.rbenv-vars
+
+# PHP
+vendor/
+
+# .NET
+bin/
+obj/
+*.dll
+*.exe
+*.pdb
+*.userprefs
+
+# Elixir
+ebin/
+deps/
+*.ez
+
+# Haskell
+dist-newstyle/
+cabal-dist/
+*.o
+*.hi
+*.chi
+*.chs.h
+*.dyn_o
+
+# Julia
+.julia/
+*.ji
+
+# Dart
+.dart_tool/
+.build/
+*.dart.js
+*.dart.js.map
+
+# Elm
+elm-stuff/
+*.elmo
+
+# Lua
+*.lua~
+
+# Perl
+*.out
+blib/
+*~
+pm_to_blib/
+*.tar.gz
+.lwpcookies
+
+# R
+.Rhistory
+.RData
+.Rproj.user/
+.packrat/lib/
+.packrat/src/
+
+# Erlang
+.erlang.cookie
+.eunit
+.rebar
+.rebar3
+_*
+ebin/
+erl_crash.dump
+
+# Scala
+*.class
+*.jar
+*.war
+*.ear
+dist/
+target/
+lib_managed/
+src_managed/
+project/boot/
+project/target/
+*.sbt.lock
+
+# Swift
+*.xcodeproj/
+*.xcworkspace/
+DerivedData/
+*.swiftmodule
+*.swiftdoc
+
+# Objective-C
+*.xcodeproj/
+*.xcworkspace/
+*.framework
+*.app
+*.ipa
+*.dSYM
+*.lproj/
+*.pch
+*.storyboardc
+DerivedData/
+
+# Android
+*.apk
+*.aar
+*.dex
+app/build/
+.gradle/
+local.properties
+captures/
+.externalNativeBuild/
+
+# Unity
+Library/
+Temp/
+Obj/
+Logs/
+*.unitypackage
+.vs/
+.sln
+.csproj
+.user
+.userprefs
+.asset
+.meta
+
+# C#
+bin/
+obj/
+*.sln
+*.csproj
+*.user
+*.userosscache
+*.suo
+*.userprefs
+*.pidb
+*.svclog
+*.aps
+*.ncb
+*.opensdf
+*.sdf
+*.cachefile
+*.VC.db
+*.VC.VC.opendb
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.VC.opendb-shm
+*.VC.VC.opendb-wal
+*.VC.VC......
 ```
