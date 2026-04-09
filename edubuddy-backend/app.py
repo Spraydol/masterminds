@@ -11,22 +11,47 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-app = Flask(__name__, static_folder='../app/dist', static_url_path='/')
-CORS(app, origins=['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:5174', 'http://127.0.0.1:5174', 'http://localhost:5175', 'http://127.0.0.1:5175'])  # Enable CORS for frontend
+# ==================== STATIC FILES (React Frontend) ====================
+
+# ✅ Fix 1: Use absolute path for dist folder
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DIST_DIR = os.path.join(BASE_DIR, '..', 'app', 'dist')
+
+# ✅ Fix 2: Update Flask init with correct static config
+app = Flask(__name__, static_folder=DIST_DIR, static_url_path='')
+CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)  # Enable CORS for frontend (all origins for /api routes)
+
+# ✅ Fix 3: Correct route syntax - use <path:filename> NOT [path:path]
 
 @app.route('/')
 def serve_index():
-    return send_from_directory(app.static_folder, 'index.html')
+    return send_from_directory(DIST_DIR, 'index.html')
 
-@app.route('/assets/<path:path>')
-def serve_assets(path):
-    return send_from_directory(os.path.join(app.static_folder, 'assets'), path)
+@app.route('/assets/<path:filename>')
+def serve_assets(filename):
+    return send_from_directory(os.path.join(DIST_DIR, 'assets'), filename)
 
-@app.route('/<path:path>')
-def serve_static(path):
-    if os.path.exists(os.path.join(app.static_folder, path)):
-        return send_from_directory(app.static_folder, path)
-    return send_from_directory(app.static_folder, 'index.html')
+@app.route('/favicon.ico')
+def serve_favicon():
+    return send_from_directory(DIST_DIR, 'favicon.ico')
+
+# ✅ Fix 4: SPA fallback with proper catch-all
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')  # ← This was broken: /[path:path](path:path)
+def serve_react(path):
+    """Serve React frontend for all non-API routes"""
+    # Skip API routes
+    if path.startswith('api/'):
+        return jsonify({'error': 'Not found'}), 404
+    
+    # If it's a file request with extension, try to serve it
+    if path and '.' in path.split('/')[-1]:
+        full_path = os.path.join(DIST_DIR, path)
+        if os.path.exists(full_path) and os.path.isfile(full_path):
+            return send_from_directory(DIST_DIR, path)
+    
+    # Otherwise serve index.html for React Router SPA
+    return send_from_directory(DIST_DIR, 'index.html')
 
 
 # Configuration
@@ -997,23 +1022,6 @@ def get_leaderboard():
             'document_count': len(u.documents)
         } for u in users]
     })
-
-# ==================== STATIC FILES (React Frontend) ====================
-
-@app.route('/', defaults={'path': ''})
-@app.route('/<path:path>')
-def serve_react(path):
-    """Serve React frontend for all non-API routes"""
-    if path.startswith('api/'):
-        return jsonify({'error': 'Not found'}), 404
-    
-    # Check if file exists in static folder
-    static_file = os.path.join('static', path)
-    if path and os.path.exists(static_file) and os.path.isfile(static_file):
-        return send_from_directory('static', path)
-    
-    # Serve index.html for all routes (SPA behavior)
-    return send_from_directory('static', 'index.html')
 
 # ==================== MAIN ====================
 
