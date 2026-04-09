@@ -183,6 +183,16 @@ export default function Dashboard() {
                       </button>
                       <button 
                         onClick={() => {
+                          navigate('/settings');
+                          setIsDropdownOpen(false);
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-edu-muted hover:text-edu-text hover:bg-white/5 transition-colors"
+                      >
+                        <Settings className="w-4 h-4" />
+                        Settings
+                      </button>
+                      <button 
+                        onClick={() => {
                           navigate('/streaks');
                           setIsDropdownOpen(false);
                         }}

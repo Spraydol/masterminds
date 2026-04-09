@@ -122,6 +122,12 @@ function App() {
         <Route path="/streaks" element={<Streaks />} />
         <Route path="/achievements" element={<Achievements />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/settings" element={
+          <div className="min-h-screen bg-[#0B0E14] text-edu-text p-8">
+            <h1 className="text-2xl font-bold mb-4">Settings</h1>
+            <p className="text-edu-muted">Settings page coming soon...</p>
+          </div>
+        } />
       </Routes>
     </Router>
   );
