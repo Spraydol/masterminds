@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Use the public GitHub Codespaces URL for the backend service
 // Format: https://<port>-<your-codespace-id>.app.github.dev
-export const API_URL = 'https://5000-opulent-space-dollop-qwxxj6r77qr2445q-5000.app.github.dev';
+export const API_URL = 'https://vigilant-doodle-ggppj694496cpgj5-5000.app.github.dev';
 
 const api = axios.create({
   baseURL: `${API_URL}/api`,
