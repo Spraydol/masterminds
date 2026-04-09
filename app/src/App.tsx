@@ -108,7 +108,7 @@ function ScrollToTop() {
 
 function App() {
   return (
-    <Router basename="/masterminds">
+    <Router>
       <ScrollToTop />
       <Routes>
         <Route path="/" element={<LandingPage />} />
