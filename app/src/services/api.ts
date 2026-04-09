@@ -52,4 +52,9 @@ export const leaderboardAPI = {
   getLeaderboard: () => api.get('/leaderboard'),
 };
 
+// Streak/Stats API
+export const streakAPI = {
+  getStats: (userId: number) => api.get(`/user/stats?user_id=${userId}`),
+};
+
 export default api;

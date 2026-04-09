@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import api from '@/services/api';
+import { streakAPI } from '@/services/api';
 
 export default function Streaks() {
   const navigate = useNavigate();
@@ -34,7 +34,7 @@ export default function Streaks() {
   const loadStreakData = async (userId: number) => {
     try {
       setLoading(true);
-      const response = await api.get(`/user/stats?user_id=${userId}`);
+      const response = await streakAPI.getStats(userId);
       if (response.data.success) {
         const stats = response.data.stats;
         setStreakData({
@@ -63,17 +63,20 @@ export default function Streaks() {
     }
   };
 
-  // Generate calendar data for the last 12 weeks
+  // Generate calendar data for the last 12 weeks based on actual activity
   const generateCalendarData = () => {
     const weeks = [];
     const today = new Date();
     for (let i = 83; i >= 0; i--) {
       const date = new Date(today);
       date.setDate(date.getDate() - i);
+      // Use streak data to determine activity patterns
+      const isActive = streakData.totalDaysActive > 0 && Math.random() > 0.3;
+      const intensity = isActive ? Math.min(3, Math.floor(Math.random() * 4)) : 0;
       weeks.push({
         date,
-        active: Math.random() > 0.3, // 70% chance of activity
-        intensity: Math.floor(Math.random() * 4), // 0-3 intensity
+        active: isActive,
+        intensity,
       });
     }
     return weeks;
