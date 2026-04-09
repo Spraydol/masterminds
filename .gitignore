@@ -1,6 +1,27 @@
 ```
-# Environment variables
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+*.js.map
+*.tsbuildinfo
+
+# Environment
 .env
 .env.local
-*.env.*
+.env.*
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# Temp files
+*.tmp
 ```
