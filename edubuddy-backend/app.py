@@ -11,22 +11,14 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# ==================== STATIC FILES (React Frontend) ====================
-
-# ✅ Fix 1: Use absolute path for dist folder
+# ==================== APP INIT ====================
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DIST_DIR = os.path.join(BASE_DIR, '..', 'app', 'dist')
 
-# ✅ Fix 2: Update Flask init with correct static config
 app = Flask(__name__, static_folder=DIST_DIR, static_url_path='')
-# Enable CORS for frontend - dynamically allow GitHub Codespaces origins
-CORS(app, 
-     resources={r"/api/*": {"origins": ["*"]}}, 
-     supports_credentials=True,
-     origins=["http://localhost:5173", "http://localhost:3000", "*.app.github.dev", "*.github.dev"])
+CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
 
-# ✅ Fix 3: Correct route syntax - use <path:filename> NOT [path:path]
-
+# ==================== STATIC FILES ====================
 @app.route('/')
 def serve_index():
     return send_from_directory(DIST_DIR, 'index.html')
@@ -37,33 +29,23 @@ def serve_assets(filename):
 
 @app.route('/favicon.ico')
 def serve_favicon():
-    return send_from_directory(DIST_DIR, 'favicon.ico')
+    return send_from_directory(DIST_DIR, 'favicon.ico', mimetype='image/x-icon')
 
-# Route to serve uploaded photos
 @app.route('/uploads/<path:filename>')
 def serve_uploads(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
-# ✅ Fix 4: SPA fallback with proper catch-all
 @app.route('/', defaults={'path': ''})
-@app.route('/<path:path>')  # ← This was broken: /[path:path](path:path)
+@app.route('/<path:path>')
 def serve_react(path):
-    """Serve React frontend for all non-API routes"""
-    # Skip API routes
     if path.startswith('api/'):
         return jsonify({'error': 'Not found'}), 404
-    
-    # If it's a file request with extension, try to serve it
-    if path and '.' in path.split('/')[-1]:
-        full_path = os.path.join(DIST_DIR, path)
-        if os.path.exists(full_path) and os.path.isfile(full_path):
-            return send_from_directory(DIST_DIR, path)
-    
-    # Otherwise serve index.html for React Router SPA
+    full_path = os.path.join(DIST_DIR, path)
+    if path and os.path.exists(full_path) and os.path.isfile(full_path):
+        return send_from_directory(DIST_DIR, path)
     return send_from_directory(DIST_DIR, 'index.html')
 
-
-# Configuration
+# ==================== CONFIG ====================
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'edubuddy-secret-key-2024')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///edubuddy.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
