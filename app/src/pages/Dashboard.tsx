@@ -3,10 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { 
   BookOpen, FileText, Video, Upload, MessageSquare, 
   LogOut, Flame, Star, Trophy, Download, User, Settings,
-  Search, Filter, Bot, ChevronDown
+  Search, Filter, Bot, ChevronDown, Globe
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { documentAPI } from '@/services/api';
+import { documentAPI, API_URL } from '@/services/api';
+import { useLanguage } from '@/contexts/LanguageContext';
+import type { Language } from '@/i18n/translations';
 
 const sectors = [
   { value: '', label: 'All Sectors' },
@@ -31,6 +33,7 @@ const docTypes = [
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { language, setLanguage, t } = useLanguage();
   const [user, setUser] = useState<any>(null);
   const [documents, setDocuments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,7 +42,15 @@ export default function Dashboard() {
   
   // Dropdown state
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [showLangMenu, setShowLangMenu] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const langDropdownRef = useRef<HTMLDivElement>(null);
+
+  const languages: { code: Language; label: string; flag: string }[] = [
+    { code: 'en', label: 'English', flag: '🇬🇧' },
+    { code: 'fr', label: 'Français', flag: '🇫🇷' },
+    { code: 'ar', label: 'العربية', flag: '🇸🇦' },
+  ];
 
   useEffect(() => {
     const userData = localStorage.getItem('edubuddy_user');
@@ -61,9 +72,12 @@ export default function Dashboard() {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsDropdownOpen(false);
       }
+      if (langDropdownRef.current && !langDropdownRef.current.contains(event.target as Node)) {
+        setShowLangMenu(false);
+      }
     };
 
-    if (isDropdownOpen) {
+    if (isDropdownOpen || showLangMenu) {
       document.addEventListener('mousedown', handleClickOutside);
     } else {
       document.removeEventListener('mousedown', handleClickOutside);
@@ -72,7 +86,7 @@ export default function Dashboard() {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isDropdownOpen]);
+  }, [isDropdownOpen, showLangMenu]);
 
   const fetchDocuments = async () => {
     try {
@@ -128,35 +142,76 @@ export default function Dashboard() {
             {/* Nav Links */}
             <div className="hidden md:flex items-center gap-1">
               <button className="px-4 py-2 rounded-xl bg-white/10 text-edu-text text-sm font-medium">
-                Resources
+                {t.dashboard.resources}
               </button>
               <button 
                 onClick={() => navigate('/community')}
                 className="px-4 py-2 rounded-xl text-edu-muted hover:text-edu-text hover:bg-white/5 text-sm font-medium transition-colors"
               >
-                Community
+                {t.nav.community}
               </button>
               <button 
                 onClick={() => navigate('/chat')}
                 className="px-4 py-2 rounded-xl text-edu-muted hover:text-edu-text hover:bg-white/5 text-sm font-medium transition-colors"
               >
-                AI Assistant
+                {t.dashboard.aiAssistant}
               </button>
             </div>
 
             {/* User & Actions */}
             <div className="flex items-center gap-4">
+              {/* Language Switcher */}
+              <div className="relative" ref={langDropdownRef}>
+                <button
+                  onClick={() => setShowLangMenu(!showLangMenu)}
+                  className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 transition-colors"
+                >
+                  <Globe className="w-4 h-4 text-edu-muted" />
+                  <span className="text-sm font-medium text-edu-text">
+                    {languages.find(l => l.code === language)?.flag}
+                  </span>
+                </button>
+                
+                {showLangMenu && (
+                  <div className="absolute right-0 mt-2 w-48 rounded-xl bg-[#121A2B] border border-white/10 shadow-xl overflow-hidden z-50">
+                    {languages.map((lang) => (
+                      <button
+                        key={lang.code}
+                        onClick={() => {
+                          setLanguage(lang.code);
+                          setShowLangMenu(false);
+                        }}
+                        className={`w-full px-4 py-2.5 text-left text-sm flex items-center gap-3 hover:bg-white/5 transition-colors ${
+                          language === lang.code ? 'bg-white/10 text-edu-text' : 'text-edu-muted'
+                        }`}
+                      >
+                        <span className="text-lg">{lang.flag}</span>
+                        <span>{lang.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               {/* User Profile Dropdown */}
               <div className="relative" ref={dropdownRef}>
                 <button 
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                   className="flex items-center gap-2 hover:bg-white/5 px-3 py-2 rounded-xl transition-colors"
                 >
-                  <div className="w-9 h-9 rounded-full bg-gradient-accent flex items-center justify-center">
-                    <span className="text-white font-semibold text-sm">
-                      {user.name?.charAt(0).toUpperCase() || 'U'}
-                    </span>
-                  </div>
+                  {user.photo ? (
+                    <img 
+                      src={`${API_URL}${user.photo}`} 
+                      alt="avatar" 
+                      className="w-9 h-9 rounded-full object-cover border-2 border-white/10"
+                    />
+                  ) : (
+                    <div className="w-9 h-9 rounded-full bg-gradient-accent flex items-center justify-center">
+                      <span className="text-white font-semibold text-sm">
+                        {user.name?.charAt(0).toUpperCase() || 'U'}
+                      </span>
+                    </div>
+                  )}
                   <ChevronDown className={`w-4 h-4 text-edu-muted transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
 
@@ -179,7 +234,7 @@ export default function Dashboard() {
                         className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-edu-muted hover:text-edu-text hover:bg-white/5 transition-colors"
                       >
                         <User className="w-4 h-4" />
-                        Profile Settings
+                        {t.dashboard.profileSettings}
                       </button>
                       <button 
                         onClick={() => {
@@ -189,7 +244,7 @@ export default function Dashboard() {
                         className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-edu-muted hover:text-edu-text hover:bg-white/5 transition-colors"
                       >
                         <Settings className="w-4 h-4" />
-                        Settings
+                        {t.dashboard.settings}
                       </button>
                       <button 
                         onClick={() => {
@@ -199,7 +254,7 @@ export default function Dashboard() {
                         className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-edu-muted hover:text-edu-text hover:bg-white/5 transition-colors"
                       >
                         <Flame className="w-4 h-4" />
-                        My Streaks
+                        {t.dashboard.myStreaks}
                       </button>
                       <button 
                         onClick={() => {
@@ -209,11 +264,11 @@ export default function Dashboard() {
                         className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-edu-muted hover:text-edu-text hover:bg-white/5 transition-colors"
                       >
                         <Trophy className="w-4 h-4" />
-                        Achievements
+                        {t.dashboard.achievements}
                       </button>
                       <div className="flex items-center gap-3 px-4 py-2.5 text-sm">
                         <Star className="w-4 h-4 text-yellow-400" />
-                        <span className="text-yellow-400 font-semibold">{user.points || 0} Points</span>
+                        <span className="text-yellow-400 font-semibold">{user.points || 0} {t.dashboard.points}</span>
                       </div>
                     </div>
 
@@ -224,7 +279,7 @@ export default function Dashboard() {
                         className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
                       >
                         <LogOut className="w-4 h-4" />
-                        Logout
+                        {t.dashboard.logout}
                       </button>
                     </div>
                   </div>
@@ -235,14 +290,14 @@ export default function Dashboard() {
         </div>
       </nav>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" dir={language === 'ar' ? 'rtl' : 'ltr'}>
         {/* Welcome Section */}
         <div className="mb-8">
           <h1 className="font-heading text-3xl font-bold text-edu-text mb-2">
-            Welcome back, <span className="text-gradient">{user.name?.split(' ')[0]}</span>! 👋
+            {t.dashboard.welcomeBack}, <span className="text-gradient">{user.name?.split(' ')[0]}</span>! 👋
           </h1>
           <p className="text-edu-muted">
-            Access all your study resources in one place
+            {t.dashboard.accessResources}
           </p>
         </div>
 
@@ -255,8 +310,8 @@ export default function Dashboard() {
             <div className="w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
               <Upload className="w-6 h-6 text-green-400" />
             </div>
-            <p className="text-edu-text font-semibold">Upload</p>
-            <p className="text-edu-muted text-sm">Share resources</p>
+            <p className="text-edu-text font-semibold">{t.dashboard.upload}</p>
+            <p className="text-edu-muted text-sm">{t.dashboard.shareResources}</p>
           </button>
 
           <button 
@@ -266,8 +321,8 @@ export default function Dashboard() {
             <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
               <MessageSquare className="w-6 h-6 text-blue-400" />
             </div>
-            <p className="text-edu-text font-semibold">Community</p>
-            <p className="text-edu-muted text-sm">Ask & help</p>
+            <p className="text-edu-text font-semibold">{t.nav.community}</p>
+            <p className="text-edu-muted text-sm">{t.dashboard.askHelp}</p>
           </button>
 
           <button 
@@ -277,33 +332,33 @@ export default function Dashboard() {
             <div className="w-12 h-12 rounded-xl bg-violet-500/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
               <Bot className="w-6 h-6 text-violet-400" />
             </div>
-            <p className="text-edu-text font-semibold">AI Assistant</p>
-            <p className="text-edu-muted text-sm">Get help 24/7</p>
+            <p className="text-edu-text font-semibold">{t.dashboard.aiAssistant}</p>
+            <p className="text-edu-muted text-sm">{t.dashboard.getHelp247}</p>
           </button>
         </div>
 
         {/* Filters & Search */}
         <div className="flex flex-col lg:flex-row gap-4 mb-6">
           {/* Search */}
-          <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-edu-muted" />
+          <div className={`relative flex-1 ${language === 'ar' ? 'text-right' : 'text-left'}`}>
+            <Search className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 text-edu-muted ${language === 'ar' ? 'right-4' : 'left-4'}`} />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search resources..."
-              className="w-full pl-12 pr-4 py-3 rounded-2xl bg-white/5 border border-white/[0.08] text-edu-text placeholder:text-edu-muted/50 outline-none focus:border-edu-blue/50 transition-colors"
+              placeholder={t.dashboard.searchResources}
+              className={`w-full py-3 rounded-2xl bg-white/5 border border-white/[0.08] text-edu-text placeholder:text-edu-muted/50 outline-none focus:border-edu-blue/50 transition-colors ${language === 'ar' ? 'pr-12 pl-4' : 'pl-12 pr-4'}`}
             />
           </div>
 
           {/* Filters */}
           <div className="flex gap-3">
-            <div className="relative">
-              <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-edu-muted" />
+            <div className={`relative ${language === 'ar' ? 'text-right' : 'text-left'}`}>
+              <Filter className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-edu-muted ${language === 'ar' ? 'right-3' : 'left-3'}`} />
               <select
                 value={filters.sector}
                 onChange={(e) => setFilters({ ...filters, sector: e.target.value })}
-                className="pl-10 pr-8 py-3 rounded-2xl bg-white/5 border border-white/[0.08] text-edu-text text-sm outline-none focus:border-edu-blue/50 transition-colors appearance-none cursor-pointer"
+                className={`py-3 rounded-2xl bg-white/5 border border-white/[0.08] text-edu-text text-sm outline-none focus:border-edu-blue/50 transition-colors appearance-none cursor-pointer ${language === 'ar' ? 'pr-10 pl-8' : 'pl-10 pr-8'}`}
               >
                 {sectors.map(s => (
                   <option key={s.value} value={s.value} className="bg-[#121A2B]">{s.label}</option>
@@ -344,14 +399,14 @@ export default function Dashboard() {
               <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center mx-auto mb-4">
                 <FileText className="w-8 h-8 text-edu-muted" />
               </div>
-              <p className="text-edu-text font-semibold mb-2">No documents found</p>
-              <p className="text-edu-muted text-sm mb-4">Be the first to upload a resource!</p>
+              <p className="text-edu-text font-semibold mb-2">{t.dashboard.noDocuments}</p>
+              <p className="text-edu-muted text-sm mb-4">{t.dashboard.beFirst}</p>
               <Button 
                 onClick={() => navigate('/upload')}
                 className="bg-gradient-accent text-white"
               >
-                <Upload className="w-4 h-4 mr-2" />
-                Upload Document
+                <Upload className={`w-4 h-4 ${language === 'ar' ? 'ml-2' : 'mr-2'}`} />
+                {t.dashboard.uploadDocument}
               </Button>
             </div>
           ) : (
