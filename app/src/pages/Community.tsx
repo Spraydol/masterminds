@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, MessageSquare, Plus, Search, 
   ThumbsUp, CheckCircle, MessageCircle,
-  Send, X
+  Send, X, Trash2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { communityAPI } from '@/services/api';
@@ -113,6 +113,38 @@ export default function Community() {
       }
     } catch (error) {
       console.error('Failed to reply:', error);
+    }
+  };
+
+  const handleLike = async (postId: number) => {
+    try {
+      const response = await communityAPI.upvotePost(postId, user.id);
+
+      if (response.data.success) {
+        // Update user points
+        const updatedUser = { ...user, points: response.data.total_points };
+        localStorage.setItem('edubuddy_user', JSON.stringify(updatedUser));
+        setUser(updatedUser);
+        
+        fetchPosts();
+      }
+    } catch (error) {
+      console.error('Failed to like post:', error);
+    }
+  };
+
+  const handleDelete = async (postId: number) => {
+    if (!confirm('Are you sure you want to delete this post?')) return;
+
+    try {
+      const response = await communityAPI.deletePost(postId, user.id);
+
+      if (response.data.success) {
+        fetchPosts();
+      }
+    } catch (error) {
+      console.error('Failed to delete post:', error);
+      alert('Failed to delete post. You can only delete your own posts.');
     }
   };
 
@@ -245,7 +277,10 @@ export default function Community() {
 
                   {/* Actions */}
                   <div className="flex items-center gap-4 mt-4 pt-4 border-t border-white/[0.08]">
-                    <button className="flex items-center gap-2 text-edu-muted hover:text-edu-text transition-colors">
+                    <button 
+                      onClick={() => handleLike(post.id)}
+                      className="flex items-center gap-2 text-edu-muted hover:text-edu-text transition-colors"
+                    >
                       <ThumbsUp className="w-4 h-4" />
                       <span className="text-sm">{post.upvotes || 0}</span>
                     </button>
@@ -256,6 +291,15 @@ export default function Community() {
                       <MessageCircle className="w-4 h-4" />
                       <span className="text-sm">{post.reply_count || 0} replies</span>
                     </button>
+                    {post.author_id === user.id && (
+                      <button 
+                        onClick={() => handleDelete(post.id)}
+                        className="flex items-center gap-2 text-red-400 hover:text-red-300 transition-colors ml-auto"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        <span className="text-sm">Delete</span>
+                      </button>
+                    )}
                     {post.is_resolved && (
                       <span className="flex items-center gap-1 text-green-400 text-sm ml-auto">
                         <CheckCircle className="w-4 h-4" />

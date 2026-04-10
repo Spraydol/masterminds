@@ -1015,6 +1015,70 @@ def get_post_details(post_id):
         }
     })
 
+@app.route('/api/community/upvote', methods=['POST'])
+def upvote_post():
+    data = request.get_json()
+    post_id = data.get('post_id')
+    user_id = data.get('user_id')
+    
+    if not all([post_id, user_id]):
+        return jsonify({'success': False, 'message': 'Post ID and user ID are required'}), 400
+    
+    post = CommunityPost.query.get(post_id)
+    if not post:
+        return jsonify({'success': False, 'message': 'Post not found'}), 404
+    
+    # Increment upvotes
+    post.upvotes += 1
+    
+    # Award points to the post author (not the voter)
+    author = User.query.get(post.author_id)
+    if author and author.id != user_id:
+        author.points += 5
+    
+    # Award points to the voter
+    voter = User.query.get(user_id)
+    if voter:
+        voter.points += 2
+    
+    db.session.commit()
+    
+    return jsonify({
+        'success': True,
+        'message': 'Upvoted! You earned 2 points!',
+        'points_earned': 2,
+        'total_points': voter.points if voter else 0
+    })
+
+@app.route('/api/community/post', methods=['DELETE'])
+def delete_post():
+    data = request.get_json()
+    post_id = data.get('post_id')
+    user_id = data.get('user_id')
+    
+    if not all([post_id, user_id]):
+        return jsonify({'success': False, 'message': 'Post ID and user ID are required'}), 400
+    
+    post = CommunityPost.query.get(post_id)
+    if not post:
+        return jsonify({'success': False, 'message': 'Post not found'}), 404
+    
+    # Only allow the author to delete their post
+    if post.author_id != user_id:
+        return jsonify({'success': False, 'message': 'You can only delete your own posts'}), 403
+    
+    # Delete all replies first
+    CommunityReply.query.filter_by(post_id=post_id).delete()
+    
+    # Delete the post
+    db.session.delete(post)
+    db.session.commit()
+    
+    return jsonify({
+        'success': True,
+        'message': 'Post deleted successfully'
+    })
+
 # ==================== AI CHAT ROUTES ====================
 
 @app.route('/api/ai/chat', methods=['POST'])
