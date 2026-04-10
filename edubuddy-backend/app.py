@@ -670,6 +670,62 @@ def login():
         }
     })
 
+@app.route('/api/auth/update-profile', methods=['POST'])
+def update_profile():
+    try:
+        # Handle FormData (for file uploads)
+        user_id = request.form.get('user_id')
+        name = request.form.get('name')
+        
+        if not user_id:
+            return jsonify({'success': False, 'message': 'User ID is required'}), 400
+
+        user = User.query.get(int(user_id))
+        if not user:
+            return jsonify({'success': False, 'message': 'User not found'}), 404
+
+        # Update name if provided
+        if name:
+            user.name = name.strip()
+
+        # Handle profile photo upload
+        if 'photo' in request.files:
+            photo_file = request.files['photo']
+            if photo_file and photo_file.filename != '':
+                # Create avatars directory if it doesn't exist
+                avatar_dir = os.path.join(app.config['UPLOAD_FOLDER'], 'avatars')
+                os.makedirs(avatar_dir, exist_ok=True)
+                
+                # Generate unique filename
+                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                safe_filename = f"avatar_{user_id}_{timestamp}.jpg"
+                photo_path = os.path.join(avatar_dir, safe_filename)
+                
+                # Save the file
+                photo_file.save(photo_path)
+                
+                # You could store the photo path in the database
+                # For now, we'll just acknowledge it was uploaded
+
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'message': 'Profile updated successfully!',
+            'user': {
+                'id': user.id,
+                'email': user.email,
+                'name': user.name,
+                'sector': user.sector,
+                'year': user.year,
+                'points': user.points
+            }
+        })
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error updating profile: {e}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+
 @app.route('/api/user/profile', methods=['GET'])
 def get_profile():
     user_id = request.args.get('user_id')

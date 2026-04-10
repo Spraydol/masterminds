@@ -65,13 +65,14 @@ export default function Profile() {
     try {
       // Create form data for file upload
       const formDataToSend = new FormData();
-      formDataToSend.append('name', formData.name);
-      formDataToSend.append('email', formData.email);
+      formDataToSend.append('user_id', user.id.toString());
+      if (formData.name) formDataToSend.append('name', formData.name);
       if (formData.profilePicture) {
-        formDataToSend.append('profile_picture', formData.profilePicture);
+        formDataToSend.append('photo', formData.profilePicture);
       }
 
       // Call API to update profile using API_URL constant
+      // DON'T set Content-Type header - browser sets it automatically for FormData
       const response = await fetch(`${API_URL}/api/auth/update-profile`, {
         method: 'POST',
         body: formDataToSend,
@@ -81,7 +82,7 @@ export default function Profile() {
 
       if (result.success) {
         // Update localStorage with new user data
-        const updatedUser = { ...user, name: formData.name, email: formData.email };
+        const updatedUser = { ...user, name: result.user.name };
         localStorage.setItem('edubuddy_user', JSON.stringify(updatedUser));
         setUser(updatedUser);
         
