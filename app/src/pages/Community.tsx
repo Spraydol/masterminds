@@ -126,7 +126,14 @@ export default function Community() {
         localStorage.setItem('edubuddy_user', JSON.stringify(updatedUser));
         setUser(updatedUser);
         
-        fetchPosts();
+        // Update the specific post's upvotes in the list
+        setPosts(prevPosts => 
+          prevPosts.map(post => 
+            post.id === postId 
+              ? { ...post, upvotes: response.data.upvotes }
+              : post
+          )
+        );
       }
     } catch (error) {
       console.error('Failed to like post:', error);

@@ -140,6 +140,15 @@ class CommunityPost(db.Model):
     is_resolved = db.Column(db.Boolean, default=False)
     author = db.relationship('User', backref='posts')
 
+class PostVote(db.Model):
+    """Track which users have voted on which posts"""
+    id = db.Column(db.Integer, primary_key=True)
+    post_id = db.Column(db.Integer, db.ForeignKey('community_post.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    post = db.relationship('CommunityPost', backref='votes')
+    user = db.relationship('User', backref='post_votes')
+
 class CommunityReply(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     post_id = db.Column(db.Integer, db.ForeignKey('community_post.id'), nullable=False)
@@ -1028,27 +1037,57 @@ def upvote_post():
     if not post:
         return jsonify({'success': False, 'message': 'Post not found'}), 404
     
-    # Increment upvotes
-    post.upvotes += 1
+    # Check if user already voted
+    existing_vote = PostVote.query.filter_by(post_id=post_id, user_id=user_id).first()
     
-    # Award points to the post author (not the voter)
-    author = User.query.get(post.author_id)
-    if author and author.id != user_id:
-        author.points += 5
-    
-    # Award points to the voter
     voter = User.query.get(user_id)
-    if voter:
-        voter.points += 2
+    author = User.query.get(post.author_id)
     
-    db.session.commit()
-    
-    return jsonify({
-        'success': True,
-        'message': 'Upvoted! You earned 2 points!',
-        'points_earned': 2,
-        'total_points': voter.points if voter else 0
-    })
+    if existing_vote:
+        # Unlike: remove vote and deduct points
+        db.session.delete(existing_vote)
+        post.upvotes -= 1
+        
+        # Deduct points from voter
+        if voter:
+            voter.points = max(0, voter.points - 2)
+        
+        # Deduct points from author
+        if author and author.id != user_id:
+            author.points = max(0, author.points - 5)
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Like removed',
+            'points_earned': -2,
+            'total_points': voter.points if voter else 0,
+            'upvotes': post.upvotes
+        })
+    else:
+        # Like: add vote and award points
+        vote = PostVote(post_id=post_id, user_id=user_id)
+        db.session.add(vote)
+        post.upvotes += 1
+        
+        # Award points to the post author (not the voter)
+        if author and author.id != user_id:
+            author.points += 5
+        
+        # Award points to the voter
+        if voter:
+            voter.points += 2
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Upvoted! You earned 2 points!',
+            'points_earned': 2,
+            'total_points': voter.points if voter else 0,
+            'upvotes': post.upvotes
+        })
 
 @app.route('/api/community/post', methods=['DELETE'])
 def delete_post():
