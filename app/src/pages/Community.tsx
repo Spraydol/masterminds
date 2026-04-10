@@ -28,6 +28,8 @@ export default function Community() {
   const [newPostSector, setNewPostSector] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [expandedPost, setExpandedPost] = useState<number | null>(null);
+  const [selectedPost, setSelectedPost] = useState<any | null>(null);
+  const [loadingPost, setLoadingPost] = useState(false);
   const [replyContent, setReplyContent] = useState('');
   const [deletingReplyId, setDeletingReplyId] = useState<number | null>(null);
 
@@ -40,12 +42,42 @@ export default function Community() {
     const parsed = JSON.parse(userData);
     setUser(parsed);
     setNewPostSector(parsed.sector || '');
-    fetchPosts();
+    // Refresh the expanded post details to show the new reply
+        communityAPI.getPostDetails(postId).then(res => {
+          if (res.data.success) {
+            setSelectedPost(res.data.post);
+          }
+        });
   }, [navigate]);
 
   useEffect(() => {
-    fetchPosts();
+    // Refresh the expanded post details to show the new reply
+        communityAPI.getPostDetails(postId).then(res => {
+          if (res.data.success) {
+            setSelectedPost(res.data.post);
+          }
+        });
   }, [sector]);
+
+  useEffect(() => {
+    if (expandedPost) {
+      setLoadingPost(true);
+      communityAPI.getPostDetails(expandedPost)
+        .then(response => {
+          if (response.data.success) {
+            setSelectedPost(response.data.post);
+          }
+        })
+        .catch(error => {
+          console.error('Failed to fetch post details:', error);
+        })
+        .finally(() => {
+          setLoadingPost(false);
+        });
+    } else {
+      setSelectedPost(null);
+    }
+  }, [expandedPost]);
 
   const fetchPosts = async () => {
     try {
@@ -83,7 +115,12 @@ export default function Community() {
         localStorage.setItem('edubuddy_user', JSON.stringify(updatedUser));
         setUser(updatedUser);
         
-        fetchPosts();
+        // Refresh the expanded post details to show the new reply
+        communityAPI.getPostDetails(postId).then(res => {
+          if (res.data.success) {
+            setSelectedPost(res.data.post);
+          }
+        });
       }
     } catch (error) {
       console.error('Failed to create post:', error);
@@ -110,7 +147,12 @@ export default function Community() {
         localStorage.setItem('edubuddy_user', JSON.stringify(updatedUser));
         setUser(updatedUser);
         
-        fetchPosts();
+        // Refresh the expanded post details to show the new reply
+        communityAPI.getPostDetails(postId).then(res => {
+          if (res.data.success) {
+            setSelectedPost(res.data.post);
+          }
+        });
       }
     } catch (error) {
       console.error('Failed to reply:', error);
@@ -148,7 +190,12 @@ export default function Community() {
       const response = await communityAPI.deletePost(postId, user.id);
 
       if (response.data.success) {
-        fetchPosts();
+        // Refresh the expanded post details to show the new reply
+        communityAPI.getPostDetails(postId).then(res => {
+          if (res.data.success) {
+            setSelectedPost(res.data.post);
+          }
+        });
         if (expandedPost === postId) {
           setExpandedPost(null);
         }
@@ -169,7 +216,12 @@ export default function Community() {
       
       if (response.data.success) {
         // Refresh posts
-        await fetchPosts();
+        await // Refresh the expanded post details to show the new reply
+        communityAPI.getPostDetails(postId).then(res => {
+          if (res.data.success) {
+            setSelectedPost(res.data.post);
+          }
+        });
         
         // Update expanded post if viewing it
         if (expandedPost === postId) {
