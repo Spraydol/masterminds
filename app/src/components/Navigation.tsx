@@ -1,14 +1,18 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, Globe } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
+import type { Language } from '@/i18n/translations';
 
 export default function Navigation() {
   const navigate = useNavigate();
   const location = useLocation();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
+  const [showLangMenu, setShowLangMenu] = useState(false);
+  const { language, setLanguage, t } = useLanguage();
+  
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 100);
@@ -29,6 +33,12 @@ export default function Navigation() {
   const handleStartLearning = () => {
     navigate('/login');
   };
+
+  const languages: { code: Language; label: string; flag: string }[] = [
+    { code: 'en', label: 'English', flag: '🇬🇧' },
+    { code: 'fr', label: 'Français', flag: '🇫🇷' },
+    { code: 'ar', label: 'العربية', flag: '🇸🇦' },
+  ];
 
   // Don't show navigation on auth pages
   if (location.pathname !== '/') return null;
@@ -58,29 +68,62 @@ export default function Navigation() {
                 onClick={() => scrollToSection('features')}
                 className="text-edu-muted hover:text-edu-text transition-colors text-sm font-medium"
               >
-                Features
+                {t.nav.features}
               </button>
               <button 
                 onClick={() => scrollToSection('community')}
                 className="text-edu-muted hover:text-edu-text transition-colors text-sm font-medium"
               >
-                Community
+                {t.nav.community}
               </button>
               <button 
                 onClick={() => scrollToSection('login')}
                 className="text-edu-muted hover:text-edu-text transition-colors text-sm font-medium"
               >
-                Login
+                {t.nav.login}
               </button>
             </div>
 
-            {/* CTA Button */}
-            <div className="hidden md:block">
+            {/* Language Selector & CTA Button */}
+            <div className="hidden md:flex items-center gap-4">
+              {/* Language Dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowLangMenu(!showLangMenu)}
+                  className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 transition-colors"
+                >
+                  <Globe className="w-4 h-4 text-edu-muted" />
+                  <span className="text-sm font-medium text-edu-text">
+                    {languages.find(l => l.code === language)?.flag}
+                  </span>
+                </button>
+                
+                {showLangMenu && (
+                  <div className="absolute right-0 mt-2 w-40 rounded-xl bg-[#121A2B] border border-white/10 shadow-xl overflow-hidden z-50">
+                    {languages.map((lang) => (
+                      <button
+                        key={lang.code}
+                        onClick={() => {
+                          setLanguage(lang.code);
+                          setShowLangMenu(false);
+                        }}
+                        className={`w-full px-4 py-2.5 text-left text-sm flex items-center gap-2 hover:bg-white/5 transition-colors ${
+                          language === lang.code ? 'bg-white/10 text-edu-text' : 'text-edu-muted'
+                        }`}
+                      >
+                        <span>{lang.flag}</span>
+                        <span>{lang.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               <Button 
                 onClick={handleStartLearning}
                 className="bg-gradient-accent text-white font-semibold px-6 py-2.5 rounded-xl hover:opacity-90 transition-opacity"
               >
-                Start Learning
+                {t.nav.startLearning}
               </Button>
             </div>
 
@@ -101,31 +144,50 @@ export default function Navigation() {
 
       {/* Mobile menu */}
       {isMobileMenuOpen && (
-        <div className="fixed inset-0 z-40 bg-[#0B0E14]/98 backdrop-blur-xl pt-20 md:hidden">
+        <div className={`fixed inset-0 z-40 bg-[#0B0E14]/98 backdrop-blur-xl pt-20 md:hidden`} dir={language === 'ar' ? 'rtl' : 'ltr'}>
           <div className="flex flex-col items-center gap-6 p-8">
+            {/* Language Selector for Mobile */}
+            <div className="flex gap-2 mb-4">
+              {languages.map((lang) => (
+                <button
+                  key={lang.code}
+                  onClick={() => {
+                    setLanguage(lang.code);
+                  }}
+                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
+                    language === lang.code
+                      ? 'bg-gradient-accent text-white'
+                      : 'bg-white/5 text-edu-muted hover:bg-white/10'
+                  }`}
+                >
+                  {lang.flag} {lang.label}
+                </button>
+              ))}
+            </div>
+
             <button 
               onClick={() => scrollToSection('features')}
               className="text-edu-text text-lg font-medium"
             >
-              Features
+              {t.nav.features}
             </button>
             <button 
               onClick={() => scrollToSection('community')}
               className="text-edu-text text-lg font-medium"
             >
-              Community
+              {t.nav.community}
             </button>
             <button 
               onClick={() => scrollToSection('login')}
               className="text-edu-text text-lg font-medium"
             >
-              Login
+              {t.nav.login}
             </button>
             <Button 
               onClick={handleStartLearning}
               className="bg-gradient-accent text-white font-semibold px-8 py-3 rounded-xl w-full mt-4"
             >
-              Start Learning
+              {t.nav.startLearning}
             </Button>
           </div>
         </div>

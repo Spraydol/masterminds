@@ -4,11 +4,13 @@ import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Flame, BookOpen, Brain, MessageCircle, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 gsap.registerPlugin(ScrollTrigger);
 
 export default function Hero() {
   const navigate = useNavigate();
+  const { t, language } = useLanguage();
   const sectionRef = useRef<HTMLElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const badgeRef = useRef<HTMLDivElement>(null);
@@ -163,12 +165,12 @@ export default function Hero() {
           </div>
 
           {/* Right: Content */}
-          <div className="w-[45%] h-full flex flex-col justify-center px-8 lg:px-12">
+          <div className="w-[45%] h-full flex flex-col justify-center px-8 lg:px-12" dir={language === 'ar' ? 'rtl' : 'ltr'}>
             <h1 
               ref={headlineRef}
               className="font-heading text-[clamp(28px,3vw,48px)] font-extrabold text-edu-text leading-tight mb-4"
             >
-              Your Smart Study Partner{' '}
+              {t.hero.headline}{' '}
               <span className="text-2xl">🎓</span>
             </h1>
             
@@ -176,18 +178,18 @@ export default function Hero() {
               ref={subheadRef}
               className="text-edu-muted text-base lg:text-lg leading-relaxed mb-6"
             >
-              Edubuddy helps you understand faster, revise smarter, and succeed with confidence.
+              {t.hero.subhead}
             </p>
 
             <div className="flex flex-wrap gap-3">
               <span className="px-4 py-2 rounded-full bg-edu-blue/10 border border-edu-blue/30 text-edu-blue text-sm font-medium">
-                Courses
+                {t.hero.courses}
               </span>
               <span className="px-4 py-2 rounded-full bg-edu-violet/10 border border-edu-violet/30 text-edu-violet text-sm font-medium">
-                Exams
+                {t.hero.exams}
               </span>
               <span className="px-4 py-2 rounded-full bg-white/5 border border-white/20 text-edu-text text-sm font-medium">
-                Community
+                {t.hero.communityLabel}
               </span>
             </div>
           </div>
@@ -207,7 +209,7 @@ export default function Hero() {
           <div className="absolute inset-0 rounded-full p-[2px] bg-gradient-to-br from-edu-blue to-edu-violet" style={{ WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)', WebkitMaskComposite: 'xor', maskComposite: 'exclude' }} />
           <Flame className="w-10 h-10 text-orange-500 mb-1" />
           <span className="text-2xl font-bold text-edu-text font-heading">3</span>
-          <span className="text-xs text-edu-muted text-center px-2">days in a row</span>
+          <span className="text-xs text-edu-muted text-center px-2">{t.hero.daysInRow}</span>
         </div>
       </div>
 
@@ -222,7 +224,7 @@ export default function Hero() {
           className="bg-gradient-accent text-white font-semibold px-8 py-6 rounded-2xl hover:opacity-90 transition-opacity shadow-glow-blue"
         >
           <RocketIcon className="w-5 h-5 mr-2" />
-          Start Learning
+          {t.nav.startLearning}
         </Button>
         <Button 
           variant="outline"
@@ -230,7 +232,7 @@ export default function Hero() {
           onClick={() => navigate('/community')}
           className="border-white/20 text-edu-text hover:bg-white/5 px-8 py-6 rounded-2xl"
         >
-          Join Community
+          {t.hero.joinCommunity}
           <ArrowRight className="w-5 h-5 ml-2" />
         </Button>
       </div>
