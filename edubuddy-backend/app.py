@@ -39,6 +39,11 @@ def serve_assets(filename):
 def serve_favicon():
     return send_from_directory(DIST_DIR, 'favicon.ico')
 
+# Route to serve uploaded photos
+@app.route('/uploads/<path:filename>')
+def serve_uploads(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
 # ✅ Fix 4: SPA fallback with proper catch-all
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')  # ← This was broken: /[path:path](path:path)
@@ -92,6 +97,7 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
     name = db.Column(db.String(100), nullable=True)
+    photo = db.Column(db.String(500), nullable=True)  # Photo URL path
     sector = db.Column(db.String(100), nullable=True)  # Web Design, Informatique Décisionnel et IA, Génie Informatique
     year = db.Column(db.String(20), nullable=True)  # 1ère année, 2ème année
     password_hash = db.Column(db.String(128), nullable=True)
@@ -133,6 +139,15 @@ class CommunityPost(db.Model):
     upvotes = db.Column(db.Integer, default=0)
     is_resolved = db.Column(db.Boolean, default=False)
     author = db.relationship('User', backref='posts')
+
+class PostVote(db.Model):
+    """Track which users have voted on which posts"""
+    id = db.Column(db.Integer, primary_key=True)
+    post_id = db.Column(db.Integer, db.ForeignKey('community_post.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    post = db.relationship('CommunityPost', backref='votes')
+    user = db.relationship('User', backref='post_votes')
 
 class CommunityReply(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -670,6 +685,56 @@ def login():
         }
     })
 
+@app.route('/api/auth/update-profile', methods=['POST'])
+def update_profile():
+    try:
+        user_id = request.form.get('user_id')
+        name = request.form.get('name')
+        
+        if not user_id:
+            return jsonify({'success': False, 'message': 'User ID is required'}), 400
+
+        user = User.query.get(int(user_id))
+        if not user:
+            return jsonify({'success': False, 'message': 'User not found'}), 404
+
+        if name:
+            user.name = name.strip()
+
+        # Handle photo upload
+        if 'photo' in request.files:
+            photo_file = request.files['photo']
+            if photo_file and photo_file.filename != '':
+                avatar_dir = os.path.join(app.config['UPLOAD_FOLDER'], 'avatars')
+                os.makedirs(avatar_dir, exist_ok=True)
+                
+                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                safe_filename = f"avatar_{user_id}_{timestamp}.jpg"
+                photo_path = os.path.join(avatar_dir, safe_filename)
+                
+                photo_file.save(photo_path)
+                # Store relative path for frontend
+                user.photo = f"/uploads/avatars/{safe_filename}"
+
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'message': 'Profile updated successfully!',
+            'user': {
+                'id': user.id,
+                'email': user.email,
+                'name': user.name,
+                'photo': user.photo,  # Return photo URL
+                'sector': user.sector,
+                'year': user.year,
+                'points': user.points
+            }
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
 @app.route('/api/user/profile', methods=['GET'])
 def get_profile():
     user_id = request.args.get('user_id')
@@ -684,6 +749,7 @@ def get_profile():
             'id': user.id,
             'email': user.email,
             'name': user.name,
+            'photo': user.photo,
             'sector': user.sector,
             'year': user.year,
             'points': user.points,
@@ -956,6 +1022,124 @@ def get_post_details(post_id):
                 'is_accepted': r.is_accepted
             } for r in post.replies]
         }
+    })
+
+@app.route('/api/community/upvote', methods=['POST'])
+def upvote_post():
+    data = request.get_json()
+    post_id = data.get('post_id')
+    user_id = data.get('user_id')
+    
+    if not all([post_id, user_id]):
+        return jsonify({'success': False, 'message': 'Post ID and user ID are required'}), 400
+    
+    post = CommunityPost.query.get(post_id)
+    if not post:
+        return jsonify({'success': False, 'message': 'Post not found'}), 404
+    
+    # Check if user already voted
+    existing_vote = PostVote.query.filter_by(post_id=post_id, user_id=user_id).first()
+    
+    voter = User.query.get(user_id)
+    author = User.query.get(post.author_id)
+    
+    if existing_vote:
+        # Unlike: remove vote and deduct points
+        db.session.delete(existing_vote)
+        post.upvotes -= 1
+        
+        # Deduct points from voter
+        if voter:
+            voter.points = max(0, voter.points - 2)
+        
+        # Deduct points from author
+        if author and author.id != user_id:
+            author.points = max(0, author.points - 5)
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Like removed',
+            'points_earned': -2,
+            'total_points': voter.points if voter else 0,
+            'upvotes': post.upvotes
+        })
+    else:
+        # Like: add vote and award points
+        vote = PostVote(post_id=post_id, user_id=user_id)
+        db.session.add(vote)
+        post.upvotes += 1
+        
+        # Award points to the post author (not the voter)
+        if author and author.id != user_id:
+            author.points += 5
+        
+        # Award points to the voter
+        if voter:
+            voter.points += 2
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Upvoted! You earned 2 points!',
+            'points_earned': 2,
+            'total_points': voter.points if voter else 0,
+            'upvotes': post.upvotes
+        })
+
+@app.route('/api/community/post', methods=['DELETE'])
+def delete_post():
+    data = request.get_json()
+    post_id = data.get('post_id')
+    user_id = data.get('user_id')
+    
+    if not all([post_id, user_id]):
+        return jsonify({'success': False, 'message': 'Post ID and user ID are required'}), 400
+    
+    post = CommunityPost.query.get(post_id)
+    if not post:
+        return jsonify({'success': False, 'message': 'Post not found'}), 404
+    
+    # Only allow the author to delete their post
+    if post.author_id != user_id:
+        return jsonify({'success': False, 'message': 'You can only delete your own posts'}), 403
+    
+    # Delete all replies first
+    CommunityReply.query.filter_by(post_id=post_id).delete()
+    
+    # Delete the post
+    db.session.delete(post)
+    db.session.commit()
+    
+    return jsonify({
+        'success': True,
+        'message': 'Post deleted successfully'
+    })
+
+@app.route('/api/community/reply/<int:reply_id>', methods=['DELETE'])
+def delete_reply(reply_id):
+    user_id = request.args.get('user_id')
+    
+    if not user_id:
+        return jsonify({'success': False, 'message': 'User ID is required'}), 400
+    
+    reply = CommunityReply.query.get(reply_id)
+    if not reply:
+        return jsonify({'success': False, 'message': 'Reply not found'}), 404
+    
+    # Check if user is the author of the reply OR the author of the post
+    post = CommunityPost.query.get(reply.post_id)
+    if reply.author_id != int(user_id) and post.author_id != int(user_id):
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+    
+    db.session.delete(reply)
+    db.session.commit()
+    
+    return jsonify({
+        'success': True,
+        'message': 'Reply deleted successfully'
     })
 
 # ==================== AI CHAT ROUTES ====================

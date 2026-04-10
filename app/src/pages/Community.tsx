@@ -3,10 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, MessageSquare, Plus, Search, 
   ThumbsUp, CheckCircle, MessageCircle,
-  Send, X
+  Send, X, Trash2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { communityAPI } from '@/services/api';
+import { communityAPI, API_URL } from '@/services/api';
 
 const sectors = [
   { value: '', label: 'All Sectors' },
@@ -29,6 +29,7 @@ export default function Community() {
   const [submitting, setSubmitting] = useState(false);
   const [expandedPost, setExpandedPost] = useState<number | null>(null);
   const [replyContent, setReplyContent] = useState('');
+  const [deletingReplyId, setDeletingReplyId] = useState<number | null>(null);
 
   useEffect(() => {
     const userData = localStorage.getItem('edubuddy_user');
@@ -113,6 +114,78 @@ export default function Community() {
       }
     } catch (error) {
       console.error('Failed to reply:', error);
+    }
+  };
+
+  const handleLike = async (postId: number) => {
+    try {
+      const response = await communityAPI.upvotePost(postId, user.id);
+
+      if (response.data.success) {
+        // Update user points
+        const updatedUser = { ...user, points: response.data.total_points };
+        localStorage.setItem('edubuddy_user', JSON.stringify(updatedUser));
+        setUser(updatedUser);
+        
+        // Update the specific post's upvotes in the list
+        setPosts(prevPosts => 
+          prevPosts.map(post => 
+            post.id === postId 
+              ? { ...post, upvotes: response.data.upvotes }
+              : post
+          )
+        );
+      }
+    } catch (error) {
+      console.error('Failed to like post:', error);
+    }
+  };
+
+  const handleDelete = async (postId: number) => {
+    if (!confirm('Are you sure you want to delete this post?')) return;
+
+    try {
+      const response = await communityAPI.deletePost(postId, user.id);
+
+      if (response.data.success) {
+        fetchPosts();
+        if (expandedPost === postId) {
+          setExpandedPost(null);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to delete post:', error);
+      alert('Failed to delete post. You can only delete your own posts.');
+    }
+  };
+
+  const handleDeleteReply = async (replyId: number, postId: number) => {
+    if (!confirm('Are you sure you want to delete this reply?')) return;
+
+    try {
+      setDeletingReplyId(replyId);
+      
+      const response = await communityAPI.deleteReply(replyId, user.id);
+      
+      if (response.data.success) {
+        // Refresh posts
+        await fetchPosts();
+        
+        // Update expanded post if viewing it
+        if (expandedPost === postId) {
+          const post = posts.find(p => p.id === postId);
+          if (post && post.replies) {
+            setExpandedPost(postId);
+          }
+        }
+      } else {
+        alert(response.data.message || 'Failed to delete reply');
+      }
+    } catch (error) {
+      console.error('Failed to delete reply:', error);
+      alert('Failed to delete reply');
+    } finally {
+      setDeletingReplyId(null);
     }
   };
 
@@ -245,7 +318,10 @@ export default function Community() {
 
                   {/* Actions */}
                   <div className="flex items-center gap-4 mt-4 pt-4 border-t border-white/[0.08]">
-                    <button className="flex items-center gap-2 text-edu-muted hover:text-edu-text transition-colors">
+                    <button 
+                      onClick={() => handleLike(post.id)}
+                      className="flex items-center gap-2 text-edu-muted hover:text-edu-text transition-colors"
+                    >
                       <ThumbsUp className="w-4 h-4" />
                       <span className="text-sm">{post.upvotes || 0}</span>
                     </button>
@@ -256,6 +332,15 @@ export default function Community() {
                       <MessageCircle className="w-4 h-4" />
                       <span className="text-sm">{post.reply_count || 0} replies</span>
                     </button>
+                    {post.author_id === user.id && (
+                      <button 
+                        onClick={() => handleDelete(post.id)}
+                        className="flex items-center gap-2 text-red-400 hover:text-red-300 transition-colors ml-auto"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        <span className="text-sm">Delete</span>
+                      </button>
+                    )}
                     {post.is_resolved && (
                       <span className="flex items-center gap-1 text-green-400 text-sm ml-auto">
                         <CheckCircle className="w-4 h-4" />
@@ -271,22 +356,41 @@ export default function Community() {
                     {/* Replies List */}
                     {post.replies && post.replies.length > 0 ? (
                       <div className="space-y-4 mb-4">
-                        {post.replies.map((reply: any) => (
-                          <div key={reply.id} className="flex gap-3">
-                            <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
-                              <span className="text-edu-text text-sm font-semibold">
-                                {reply.author_name?.charAt(0).toUpperCase()}
-                              </span>
-                            </div>
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className="text-edu-text text-sm font-semibold">{reply.author_name}</span>
-                                <span className="text-edu-muted text-xs">{formatDate(reply.created_at)}</span>
+                        {post.replies.map((reply: any) => {
+                          const isReplyAuthor = user && user.id === reply.author_id;
+                          const isPostAuthor = user && user.id === post.author_id;
+                          const canDelete = isReplyAuthor || isPostAuthor;
+                          
+                          return (
+                            <div key={reply.id} className="flex gap-3">
+                              <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
+                                <span className="text-edu-text text-sm font-semibold">
+                                  {reply.author_name?.charAt(0).toUpperCase()}
+                                </span>
                               </div>
-                              <p className="text-edu-muted text-sm">{reply.content}</p>
+                              <div className="flex-1">
+                                <div className="flex items-center justify-between mb-1">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-edu-text text-sm font-semibold">{reply.author_name}</span>
+                                    <span className="text-edu-muted text-xs">{formatDate(reply.created_at)}</span>
+                                  </div>
+                                  
+                                  {canDelete && (
+                                    <button
+                                      onClick={() => handleDeleteReply(reply.id, post.id)}
+                                      disabled={deletingReplyId === reply.id}
+                                      className="p-1.5 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
+                                      title="Delete reply"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </button>
+                                  )}
+                                </div>
+                                <p className="text-edu-muted text-sm">{reply.content}</p>
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     ) : (
                       <p className="text-edu-muted text-sm mb-4">No replies yet. Be the first to help!</p>
