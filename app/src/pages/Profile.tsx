@@ -81,8 +81,8 @@ export default function Profile() {
       const result = await response.json();
 
       if (result.success) {
-        // Update localStorage with new user data
-        const updatedUser = { ...user, name: result.user.name };
+        // Update localStorage with new user data - include all fields from result.user
+        const updatedUser = { ...user, ...result.user };
         localStorage.setItem('edubuddy_user', JSON.stringify(updatedUser));
         setUser(updatedUser);
         
@@ -161,7 +161,13 @@ export default function Profile() {
           <div className="flex flex-col items-center">
             <div className="relative group">
               <div className="w-32 h-32 rounded-full bg-gradient-accent flex items-center justify-center overflow-hidden border-4 border-white/10">
-                {formData.previewUrl ? (
+                {user.photo ? (
+                  <img 
+                    src={`${API_URL}${user.photo}`} 
+                    alt="avatar" 
+                    className="w-full h-full object-cover border-4 border-edu-blue/20"
+                  />
+                ) : formData.previewUrl ? (
                   <img 
                     src={formData.previewUrl} 
                     alt="Profile" 

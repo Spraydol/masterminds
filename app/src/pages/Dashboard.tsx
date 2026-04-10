@@ -6,7 +6,7 @@ import {
   Search, Filter, Bot, ChevronDown, Globe
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { documentAPI } from '@/services/api';
+import { documentAPI, API_URL } from '@/services/api';
 import { useLanguage } from '@/contexts/LanguageContext';
 import type { Language } from '@/i18n/translations';
 
@@ -199,11 +199,19 @@ export default function Dashboard() {
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                   className="flex items-center gap-2 hover:bg-white/5 px-3 py-2 rounded-xl transition-colors"
                 >
-                  <div className="w-9 h-9 rounded-full bg-gradient-accent flex items-center justify-center">
-                    <span className="text-white font-semibold text-sm">
-                      {user.name?.charAt(0).toUpperCase() || 'U'}
-                    </span>
-                  </div>
+                  {user.photo ? (
+                    <img 
+                      src={`${API_URL}${user.photo}`} 
+                      alt="avatar" 
+                      className="w-9 h-9 rounded-full object-cover border-2 border-white/10"
+                    />
+                  ) : (
+                    <div className="w-9 h-9 rounded-full bg-gradient-accent flex items-center justify-center">
+                      <span className="text-white font-semibold text-sm">
+                        {user.name?.charAt(0).toUpperCase() || 'U'}
+                      </span>
+                    </div>
+                  )}
                   <ChevronDown className={`w-4 h-4 text-edu-muted transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
 

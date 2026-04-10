@@ -39,6 +39,11 @@ def serve_assets(filename):
 def serve_favicon():
     return send_from_directory(DIST_DIR, 'favicon.ico')
 
+# Route to serve uploaded photos
+@app.route('/uploads/<path:filename>')
+def serve_uploads(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
 # ✅ Fix 4: SPA fallback with proper catch-all
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')  # ← This was broken: /[path:path](path:path)
@@ -92,6 +97,7 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
     name = db.Column(db.String(100), nullable=True)
+    photo = db.Column(db.String(500), nullable=True)  # Photo URL path
     sector = db.Column(db.String(100), nullable=True)  # Web Design, Informatique Décisionnel et IA, Génie Informatique
     year = db.Column(db.String(20), nullable=True)  # 1ère année, 2ème année
     password_hash = db.Column(db.String(128), nullable=True)
@@ -673,7 +679,6 @@ def login():
 @app.route('/api/auth/update-profile', methods=['POST'])
 def update_profile():
     try:
-        # Handle FormData (for file uploads)
         user_id = request.form.get('user_id')
         name = request.form.get('name')
         
@@ -684,28 +689,23 @@ def update_profile():
         if not user:
             return jsonify({'success': False, 'message': 'User not found'}), 404
 
-        # Update name if provided
         if name:
             user.name = name.strip()
 
-        # Handle profile photo upload
+        # Handle photo upload
         if 'photo' in request.files:
             photo_file = request.files['photo']
             if photo_file and photo_file.filename != '':
-                # Create avatars directory if it doesn't exist
                 avatar_dir = os.path.join(app.config['UPLOAD_FOLDER'], 'avatars')
                 os.makedirs(avatar_dir, exist_ok=True)
                 
-                # Generate unique filename
                 timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
                 safe_filename = f"avatar_{user_id}_{timestamp}.jpg"
                 photo_path = os.path.join(avatar_dir, safe_filename)
                 
-                # Save the file
                 photo_file.save(photo_path)
-                
-                # You could store the photo path in the database
-                # For now, we'll just acknowledge it was uploaded
+                # Store relative path for frontend
+                user.photo = f"/uploads/avatars/{safe_filename}"
 
         db.session.commit()
 
@@ -716,6 +716,7 @@ def update_profile():
                 'id': user.id,
                 'email': user.email,
                 'name': user.name,
+                'photo': user.photo,  # Return photo URL
                 'sector': user.sector,
                 'year': user.year,
                 'points': user.points
@@ -723,7 +724,6 @@ def update_profile():
         })
     except Exception as e:
         db.session.rollback()
-        print(f"Error updating profile: {e}")
         return jsonify({'success': False, 'message': str(e)}), 500
 
 @app.route('/api/user/profile', methods=['GET'])
@@ -740,6 +740,7 @@ def get_profile():
             'id': user.id,
             'email': user.email,
             'name': user.name,
+            'photo': user.photo,
             'sector': user.sector,
             'year': user.year,
             'points': user.points,
