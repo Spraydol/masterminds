@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   BookOpen, FileText, Video, Upload, MessageSquare, 
-  LogOut, Flame, Star, Trophy, Download,
-  Search, Filter, Bot
+  LogOut, Flame, Star, Trophy, Download, User, Settings,
+  Search, Filter, Bot, ChevronDown
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { documentAPI } from '@/services/api';
@@ -36,6 +36,10 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({ sector: '', year: '', doc_type: '' });
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // Dropdown state
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const userData = localStorage.getItem('edubuddy_user');
@@ -50,6 +54,25 @@ export default function Dashboard() {
   useEffect(() => {
     fetchDocuments();
   }, [filters]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    if (isDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isDropdownOpen]);
 
   const fetchDocuments = async () => {
     try {
@@ -67,6 +90,7 @@ export default function Dashboard() {
   const handleLogout = () => {
     localStorage.removeItem('edubuddy_user');
     navigate('/');
+    setIsDropdownOpen(false);
   };
 
   const filteredDocuments = documents.filter(doc =>
@@ -122,31 +146,89 @@ export default function Dashboard() {
 
             {/* User & Actions */}
             <div className="flex items-center gap-4">
-              {/* Points */}
-              <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-yellow-500/10 border border-yellow-500/30">
-                <Star className="w-4 h-4 text-yellow-400" />
-                <span className="text-yellow-400 font-semibold text-sm">{user.points || 0}</span>
-              </div>
-
-              {/* Streak */}
-              <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/30">
-                <Flame className="w-4 h-4 text-orange-400" />
-                <span className="text-orange-400 font-semibold text-sm">{user.streak_days || 0}</span>
-              </div>
-
-              {/* User */}
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-gradient-accent flex items-center justify-center">
-                  <span className="text-white font-semibold text-sm">
-                    {user.name?.charAt(0).toUpperCase() || 'U'}
-                  </span>
-                </div>
+              {/* User Profile Dropdown */}
+              <div className="relative" ref={dropdownRef}>
                 <button 
-                  onClick={handleLogout}
-                  className="text-edu-muted hover:text-red-400 transition-colors"
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  className="flex items-center gap-2 hover:bg-white/5 px-3 py-2 rounded-xl transition-colors"
                 >
-                  <LogOut className="w-5 h-5" />
+                  <div className="w-9 h-9 rounded-full bg-gradient-accent flex items-center justify-center">
+                    <span className="text-white font-semibold text-sm">
+                      {user.name?.charAt(0).toUpperCase() || 'U'}
+                    </span>
+                  </div>
+                  <ChevronDown className={`w-4 h-4 text-edu-muted transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
+
+                {/* Dropdown Menu */}
+                {isDropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-56 rounded-2xl border border-white/[0.08] bg-[#0B0E14] shadow-xl overflow-hidden z-50">
+                    {/* User Info Header */}
+                    <div className="p-4 border-b border-white/[0.08]">
+                      <p className="text-edu-text font-semibold">{user.name}</p>
+                      <p className="text-edu-muted text-sm">{user.email}</p>
+                    </div>
+                    
+                    {/* Menu Items */}
+                    <div className="py-2">
+                      <button 
+                        onClick={() => {
+                          navigate('/profile');
+                          setIsDropdownOpen(false);
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-edu-muted hover:text-edu-text hover:bg-white/5 transition-colors"
+                      >
+                        <User className="w-4 h-4" />
+                        Profile Settings
+                      </button>
+                      <button 
+                        onClick={() => {
+                          navigate('/settings');
+                          setIsDropdownOpen(false);
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-edu-muted hover:text-edu-text hover:bg-white/5 transition-colors"
+                      >
+                        <Settings className="w-4 h-4" />
+                        Settings
+                      </button>
+                      <button 
+                        onClick={() => {
+                          navigate('/streaks');
+                          setIsDropdownOpen(false);
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-edu-muted hover:text-edu-text hover:bg-white/5 transition-colors"
+                      >
+                        <Flame className="w-4 h-4" />
+                        My Streaks
+                      </button>
+                      <button 
+                        onClick={() => {
+                          navigate('/achievements');
+                          setIsDropdownOpen(false);
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-edu-muted hover:text-edu-text hover:bg-white/5 transition-colors"
+                      >
+                        <Trophy className="w-4 h-4" />
+                        Achievements
+                      </button>
+                      <div className="flex items-center gap-3 px-4 py-2.5 text-sm">
+                        <Star className="w-4 h-4 text-yellow-400" />
+                        <span className="text-yellow-400 font-semibold">{user.points || 0} Points</span>
+                      </div>
+                    </div>
+
+                    {/* Logout */}
+                    <div className="py-2 border-t border-white/[0.08]">
+                      <button 
+                        onClick={handleLogout}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        Logout
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -164,8 +246,8 @@ export default function Dashboard() {
           </p>
         </div>
 
-        {/* Quick Actions */}
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-8">
+        {/* Quick Actions - Centered Grid with 3 items */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8 max-w-4xl mx-auto">
           <button 
             onClick={() => navigate('/upload')}
             className="p-6 rounded-2xl border border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.05] hover:border-white/[0.15] transition-all group"
@@ -198,36 +280,6 @@ export default function Dashboard() {
             <p className="text-edu-text font-semibold">AI Assistant</p>
             <p className="text-edu-muted text-sm">Get help 24/7</p>
           </button>
-
-          <button 
-            onClick={() => navigate('/streaks')}
-            className="p-6 rounded-2xl border border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.05] hover:border-white/[0.15] transition-all group"
-          >
-            <div className="w-12 h-12 rounded-xl bg-orange-500/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-              <Flame className="w-6 h-6 text-orange-400" />
-            </div>
-            <p className="text-edu-text font-semibold">Streaks</p>
-            <p className="text-edu-muted text-sm">Your progress</p>
-          </button>
-
-          <button 
-            onClick={() => navigate('/achievements')}
-            className="p-6 rounded-2xl border border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.05] hover:border-white/[0.15] transition-all group"
-          >
-            <div className="w-12 h-12 rounded-xl bg-yellow-500/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-              <Trophy className="w-6 h-6 text-yellow-400" />
-            </div>
-            <p className="text-edu-text font-semibold">Achievements</p>
-            <p className="text-edu-muted text-sm">Unlock badges</p>
-          </button>
-
-          <div className="p-6 rounded-2xl border border-white/[0.08] bg-gradient-to-br from-yellow-500/10 to-orange-500/10">
-            <div className="w-12 h-12 rounded-xl bg-yellow-500/20 flex items-center justify-center mb-4">
-              <Star className="w-6 h-6 text-yellow-400" />
-            </div>
-            <p className="text-edu-text font-semibold">{user.points || 0} Points</p>
-            <p className="text-edu-muted text-sm">Keep it up!</p>
-          </div>
         </div>
 
         {/* Filters & Search */}

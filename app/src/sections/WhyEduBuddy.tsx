@@ -97,7 +97,7 @@ export default function WhyEduBuddy() {
           className="w-full lg:w-[52%] h-[50vh] lg:h-auto relative"
         >
           <img 
-            src="/masterminds/why_student.jpg" 
+            src="/why_student.jpg" 
             alt="Student smiling while studying"
             className="w-full h-full object-cover"
           />
