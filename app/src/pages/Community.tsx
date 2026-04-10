@@ -30,7 +30,6 @@ export default function Community() {
   const [expandedPost, setExpandedPost] = useState<number | null>(null);
   const [replyContent, setReplyContent] = useState('');
   const [deletingReplyId, setDeletingReplyId] = useState<number | null>(null);
-  const [deletingPostId, setDeletingPostId] = useState<number | null>(null);
 
   useEffect(() => {
     const userData = localStorage.getItem('edubuddy_user');
@@ -146,7 +145,6 @@ export default function Community() {
     if (!confirm('Are you sure you want to delete this post?')) return;
 
     try {
-      setDeletingPostId(postId);
       const response = await communityAPI.deletePost(postId, user.id);
 
       if (response.data.success) {
@@ -158,8 +156,6 @@ export default function Community() {
     } catch (error) {
       console.error('Failed to delete post:', error);
       alert('Failed to delete post. You can only delete your own posts.');
-    } finally {
-      setDeletingPostId(null);
     }
   };
 
@@ -169,18 +165,13 @@ export default function Community() {
     try {
       setDeletingReplyId(replyId);
       
-      const response = await fetch(
-        `${API_URL}/api/community/reply/${replyId}?user_id=${user.id}`,
-        { method: 'DELETE' }
-      );
+      const response = await communityAPI.deleteReply(replyId, user.id);
       
-      const result = await response.json();
-      
-      if (result.success) {
+      if (response.data.success) {
         // Refresh posts
         await fetchPosts();
         
-        // Update selected post if viewing it
+        // Update expanded post if viewing it
         if (expandedPost === postId) {
           const post = posts.find(p => p.id === postId);
           if (post && post.replies) {
@@ -188,7 +179,7 @@ export default function Community() {
           }
         }
       } else {
-        alert(result.message || 'Failed to delete reply');
+        alert(response.data.message || 'Failed to delete reply');
       }
     } catch (error) {
       console.error('Failed to delete reply:', error);

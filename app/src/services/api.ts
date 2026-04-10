@@ -56,6 +56,7 @@ export const communityAPI = {
   getPostDetails: (postId: number) => api.get(`/community/post/${postId}`),
   upvotePost: (postId: number, userId: number) => api.post('/community/upvote', { post_id: postId, user_id: userId }),
   deletePost: (postId: number, userId: number) => api.delete('/community/post', { data: { post_id: postId, user_id: userId } }),
+  deleteReply: (replyId: number, userId: number) => api.delete(`/community/reply/${replyId}`, { params: { user_id: userId } }),
 };
 
 // AI Chat APIs
