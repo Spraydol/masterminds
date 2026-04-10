@@ -42,21 +42,17 @@ export default function Community() {
     const parsed = JSON.parse(userData);
     setUser(parsed);
     setNewPostSector(parsed.sector || '');
-    // Refresh the expanded post details to show the new reply
-        communityAPI.getPostDetails(postId).then(res => {
-          if (res.data.success) {
-            setSelectedPost(res.data.post);
-          }
-        });
+    
+    // Log API_URL for debugging
+    console.log('API URL:', API_URL);
+    
+    // Fetch posts on mount
+    fetchPosts();
   }, [navigate]);
 
   useEffect(() => {
-    // Refresh the expanded post details to show the new reply
-        communityAPI.getPostDetails(postId).then(res => {
-          if (res.data.success) {
-            setSelectedPost(res.data.post);
-          }
-        });
+    // Refetch posts when sector changes
+    fetchPosts();
   }, [sector]);
 
   useEffect(() => {
@@ -115,12 +111,8 @@ export default function Community() {
         localStorage.setItem('edubuddy_user', JSON.stringify(updatedUser));
         setUser(updatedUser);
         
-        // Refresh the expanded post details to show the new reply
-        communityAPI.getPostDetails(postId).then(res => {
-          if (res.data.success) {
-            setSelectedPost(res.data.post);
-          }
-        });
+        // Refresh posts list
+        fetchPosts();
       }
     } catch (error) {
       console.error('Failed to create post:', error);
@@ -190,12 +182,8 @@ export default function Community() {
       const response = await communityAPI.deletePost(postId, user.id);
 
       if (response.data.success) {
-        // Refresh the expanded post details to show the new reply
-        communityAPI.getPostDetails(postId).then(res => {
-          if (res.data.success) {
-            setSelectedPost(res.data.post);
-          }
-        });
+        // Refresh posts list
+        fetchPosts();
         if (expandedPost === postId) {
           setExpandedPost(null);
         }
@@ -215,13 +203,8 @@ export default function Community() {
       const response = await communityAPI.deleteReply(replyId, user.id);
       
       if (response.data.success) {
-        // Refresh posts
-        await // Refresh the expanded post details to show the new reply
-        communityAPI.getPostDetails(postId).then(res => {
-          if (res.data.success) {
-            setSelectedPost(res.data.post);
-          }
-        });
+        // Refresh posts list
+        fetchPosts();
         
         // Update expanded post if viewing it
         if (expandedPost === postId) {
