@@ -19,7 +19,11 @@ DIST_DIR = os.path.join(BASE_DIR, '..', 'app', 'dist')
 
 # ✅ Fix 2: Update Flask init with correct static config
 app = Flask(__name__, static_folder=DIST_DIR, static_url_path='')
-CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)  # Enable CORS for frontend (all origins for /api routes)
+# Enable CORS for frontend - dynamically allow GitHub Codespaces origins
+CORS(app, 
+     resources={r"/api/*": {"origins": ["*"]}}, 
+     supports_credentials=True,
+     origins=["http://localhost:5173", "http://localhost:3000", "*.app.github.dev", "*.github.dev"])
 
 # ✅ Fix 3: Correct route syntax - use <path:filename> NOT [path:path]
 
