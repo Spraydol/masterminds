@@ -28,6 +28,8 @@ export default function Community() {
   const [newPostSector, setNewPostSector] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [expandedPost, setExpandedPost] = useState<number | null>(null);
+  const [selectedPost, setSelectedPost] = useState<any | null>(null);
+  const [loadingPost, setLoadingPost] = useState(false);
   const [replyContent, setReplyContent] = useState('');
   const [deletingReplyId, setDeletingReplyId] = useState<number | null>(null);
 
@@ -40,12 +42,38 @@ export default function Community() {
     const parsed = JSON.parse(userData);
     setUser(parsed);
     setNewPostSector(parsed.sector || '');
+    
+    // Log API_URL for debugging
+    console.log('API URL:', API_URL);
+    
+    // Fetch posts on mount
     fetchPosts();
   }, [navigate]);
 
   useEffect(() => {
+    // Refetch posts when sector changes
     fetchPosts();
   }, [sector]);
+
+  useEffect(() => {
+    if (expandedPost) {
+      setLoadingPost(true);
+      communityAPI.getPostDetails(expandedPost)
+        .then(response => {
+          if (response.data.success) {
+            setSelectedPost(response.data.post);
+          }
+        })
+        .catch(error => {
+          console.error('Failed to fetch post details:', error);
+        })
+        .finally(() => {
+          setLoadingPost(false);
+        });
+    } else {
+      setSelectedPost(null);
+    }
+  }, [expandedPost]);
 
   const fetchPosts = async () => {
     try {
@@ -83,6 +111,7 @@ export default function Community() {
         localStorage.setItem('edubuddy_user', JSON.stringify(updatedUser));
         setUser(updatedUser);
         
+        // Refresh posts list
         fetchPosts();
       }
     } catch (error) {
@@ -110,7 +139,12 @@ export default function Community() {
         localStorage.setItem('edubuddy_user', JSON.stringify(updatedUser));
         setUser(updatedUser);
         
-        fetchPosts();
+        // Refresh the expanded post details to show the new reply
+        communityAPI.getPostDetails(postId).then(res => {
+          if (res.data.success) {
+            setSelectedPost(res.data.post);
+          }
+        });
       }
     } catch (error) {
       console.error('Failed to reply:', error);
@@ -148,6 +182,7 @@ export default function Community() {
       const response = await communityAPI.deletePost(postId, user.id);
 
       if (response.data.success) {
+        // Refresh posts list
         fetchPosts();
         if (expandedPost === postId) {
           setExpandedPost(null);
@@ -168,8 +203,8 @@ export default function Community() {
       const response = await communityAPI.deleteReply(replyId, user.id);
       
       if (response.data.success) {
-        // Refresh posts
-        await fetchPosts();
+        // Refresh posts list
+        fetchPosts();
         
         // Update expanded post if viewing it
         if (expandedPost === postId) {
@@ -244,6 +279,8 @@ export default function Community() {
           <div className="relative flex-1">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-edu-muted" />
             <input
+              id="community-search" 
+              name="search"                
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -353,66 +390,75 @@ export default function Community() {
                 {/* Replies Section */}
                 {expandedPost === post.id && (
                   <div className="border-t border-white/[0.08] bg-white/[0.02] p-5">
-                    {/* Replies List */}
-                    {post.replies && post.replies.length > 0 ? (
-                      <div className="space-y-4 mb-4">
-                        {post.replies.map((reply: any) => {
-                          const isReplyAuthor = user && user.id === reply.author_id;
-                          const isPostAuthor = user && user.id === post.author_id;
-                          const canDelete = isReplyAuthor || isPostAuthor;
-                          
-                          return (
-                            <div key={reply.id} className="flex gap-3">
-                              <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
-                                <span className="text-edu-text text-sm font-semibold">
-                                  {reply.author_name?.charAt(0).toUpperCase()}
-                                </span>
-                              </div>
-                              <div className="flex-1">
-                                <div className="flex items-center justify-between mb-1">
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-edu-text text-sm font-semibold">{reply.author_name}</span>
-                                    <span className="text-edu-muted text-xs">{formatDate(reply.created_at)}</span>
-                                  </div>
-                                  
-                                  {canDelete && (
-                                    <button
-                                      onClick={() => handleDeleteReply(reply.id, post.id)}
-                                      disabled={deletingReplyId === reply.id}
-                                      className="p-1.5 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
-                                      title="Delete reply"
-                                    >
-                                      <Trash2 className="w-4 h-4" />
-                                    </button>
-                                  )}
-                                </div>
-                                <p className="text-edu-muted text-sm">{reply.content}</p>
-                              </div>
-                            </div>
-                          );
-                        })}
+                    {/* Loading State */}
+                    {loadingPost ? (
+                      <div className="flex items-center justify-center py-8">
+                        <div className="w-6 h-6 border-2 border-edu-blue border-t-transparent rounded-full animate-spin" />
                       </div>
-                    ) : (
-                      <p className="text-edu-muted text-sm mb-4">No replies yet. Be the first to help!</p>
-                    )}
+                    ) : selectedPost && selectedPost.id === post.id ? (
+                      <>
+                        {/* Replies List */}
+                        {selectedPost.replies && selectedPost.replies.length > 0 ? (
+                          <div className="space-y-4 mb-4">
+                            {selectedPost.replies.map((reply: any) => {
+                              const isReplyAuthor = user && user.id === reply.author_id;
+                              const isPostAuthor = user && user.id === post.author_id;
+                              const canDelete = isReplyAuthor || isPostAuthor;
+                              
+                              return (
+                                <div key={reply.id} className="flex gap-3">
+                                  <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
+                                    <span className="text-edu-text text-sm font-semibold">
+                                      {reply.author_name?.charAt(0).toUpperCase()}
+                                    </span>
+                                  </div>
+                                  <div className="flex-1">
+                                    <div className="flex items-center justify-between mb-1">
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-edu-text text-sm font-semibold">{reply.author_name}</span>
+                                        <span className="text-edu-muted text-xs">{formatDate(reply.created_at)}</span>
+                                      </div>
+                                      
+                                      {canDelete && (
+                                        <button
+                                          onClick={() => handleDeleteReply(reply.id, post.id)}
+                                          disabled={deletingReplyId === reply.id}
+                                          className="p-1.5 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
+                                          title="Delete reply"
+                                        >
+                                          <Trash2 className="w-4 h-4" />
+                                        </button>
+                                      )}
+                                    </div>
+                                    <p className="text-edu-muted text-sm">{reply.content}</p>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <p className="text-edu-muted text-sm mb-4">No replies yet. Be the first to help!</p>
+                        )}
 
-                    {/* Reply Input */}
-                    <div className="flex gap-3">
-                      <input
-                        type="text"
-                        value={replyContent}
-                        onChange={(e) => setReplyContent(e.target.value)}
-                        placeholder="Write a helpful reply..."
-                        className="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-edu-text placeholder:text-edu-muted/50 outline-none focus:border-edu-blue/50 transition-colors text-sm"
-                      />
-                      <button
-                        onClick={() => handleReply(post.id)}
-                        disabled={!replyContent.trim()}
-                        className="w-10 h-10 rounded-xl bg-gradient-accent flex items-center justify-center disabled:opacity-50"
-                      >
-                        <Send className="w-4 h-4 text-white" />
-                      </button>
-                    </div>
+                        {/* Reply Input */}
+                        <div className="flex gap-3">
+                          <input
+                            type="text"
+                            value={replyContent}
+                            onChange={(e) => setReplyContent(e.target.value)}
+                            placeholder="Write a helpful reply..."
+                            className="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/[0.08] text-edu-text placeholder:text-edu-muted/50 outline-none focus:border-edu-blue/50 transition-colors text-sm"
+                          />
+                          <button
+                            onClick={() => handleReply(post.id)}
+                            disabled={!replyContent.trim()}
+                            className="w-10 h-10 rounded-xl bg-gradient-accent flex items-center justify-center disabled:opacity-50"
+                          >
+                            <Send className="w-4 h-4 text-white" />
+                          </button>
+                        </div>
+                      </>
+                    ) : null}
                   </div>
                 )}
               </div>
