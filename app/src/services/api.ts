@@ -1,8 +1,22 @@
 import axios from 'axios';
 
-// Use the public GitHub Codespaces URL for the backend service
-// Format: https://<port>-<your-codespace-id>.app.github.dev
-export const API_URL = 'https://vigilant-doodle-ggppj694496cpgj5-5000.app.github.dev';
+// Auto-detect API URL for GitHub Codespaces
+const getApiBaseUrl = () => {
+  // If running on Codespaces/GitHub Pages, use relative path
+  if (typeof window !== 'undefined' && window.location.hostname.includes('app.github.dev')) {
+    // Extract the base domain (without port) for API calls
+    const hostname = window.location.hostname;
+    const port = window.location.port;
+    // If frontend is on port 5173, backend is likely on 5000
+    return port 
+      ? `https://${hostname.replace('-5173', '-5000')}` 
+      : `https://${hostname}`;
+  }
+  // Local development fallback
+  return 'http://localhost:5000';
+};
+
+export const API_URL = getApiBaseUrl();
 
 const api = axios.create({
   baseURL: `${API_URL}/api`,
