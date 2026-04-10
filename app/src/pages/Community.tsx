@@ -6,7 +6,7 @@ import {
   Send, X, Trash2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { communityAPI } from '@/services/api';
+import { communityAPI, API_URL } from '@/services/api';
 
 const sectors = [
   { value: '', label: 'All Sectors' },
@@ -29,6 +29,8 @@ export default function Community() {
   const [submitting, setSubmitting] = useState(false);
   const [expandedPost, setExpandedPost] = useState<number | null>(null);
   const [replyContent, setReplyContent] = useState('');
+  const [deletingReplyId, setDeletingReplyId] = useState<number | null>(null);
+  const [deletingPostId, setDeletingPostId] = useState<number | null>(null);
 
   useEffect(() => {
     const userData = localStorage.getItem('edubuddy_user');
@@ -144,14 +146,55 @@ export default function Community() {
     if (!confirm('Are you sure you want to delete this post?')) return;
 
     try {
+      setDeletingPostId(postId);
       const response = await communityAPI.deletePost(postId, user.id);
 
       if (response.data.success) {
         fetchPosts();
+        if (expandedPost === postId) {
+          setExpandedPost(null);
+        }
       }
     } catch (error) {
       console.error('Failed to delete post:', error);
       alert('Failed to delete post. You can only delete your own posts.');
+    } finally {
+      setDeletingPostId(null);
+    }
+  };
+
+  const handleDeleteReply = async (replyId: number, postId: number) => {
+    if (!confirm('Are you sure you want to delete this reply?')) return;
+
+    try {
+      setDeletingReplyId(replyId);
+      
+      const response = await fetch(
+        `${API_URL}/api/community/reply/${replyId}?user_id=${user.id}`,
+        { method: 'DELETE' }
+      );
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        // Refresh posts
+        await fetchPosts();
+        
+        // Update selected post if viewing it
+        if (expandedPost === postId) {
+          const post = posts.find(p => p.id === postId);
+          if (post && post.replies) {
+            setExpandedPost(postId);
+          }
+        }
+      } else {
+        alert(result.message || 'Failed to delete reply');
+      }
+    } catch (error) {
+      console.error('Failed to delete reply:', error);
+      alert('Failed to delete reply');
+    } finally {
+      setDeletingReplyId(null);
     }
   };
 
@@ -322,22 +365,41 @@ export default function Community() {
                     {/* Replies List */}
                     {post.replies && post.replies.length > 0 ? (
                       <div className="space-y-4 mb-4">
-                        {post.replies.map((reply: any) => (
-                          <div key={reply.id} className="flex gap-3">
-                            <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
-                              <span className="text-edu-text text-sm font-semibold">
-                                {reply.author_name?.charAt(0).toUpperCase()}
-                              </span>
-                            </div>
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className="text-edu-text text-sm font-semibold">{reply.author_name}</span>
-                                <span className="text-edu-muted text-xs">{formatDate(reply.created_at)}</span>
+                        {post.replies.map((reply: any) => {
+                          const isReplyAuthor = user && user.id === reply.author_id;
+                          const isPostAuthor = user && user.id === post.author_id;
+                          const canDelete = isReplyAuthor || isPostAuthor;
+                          
+                          return (
+                            <div key={reply.id} className="flex gap-3">
+                              <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
+                                <span className="text-edu-text text-sm font-semibold">
+                                  {reply.author_name?.charAt(0).toUpperCase()}
+                                </span>
                               </div>
-                              <p className="text-edu-muted text-sm">{reply.content}</p>
+                              <div className="flex-1">
+                                <div className="flex items-center justify-between mb-1">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-edu-text text-sm font-semibold">{reply.author_name}</span>
+                                    <span className="text-edu-muted text-xs">{formatDate(reply.created_at)}</span>
+                                  </div>
+                                  
+                                  {canDelete && (
+                                    <button
+                                      onClick={() => handleDeleteReply(reply.id, post.id)}
+                                      disabled={deletingReplyId === reply.id}
+                                      className="p-1.5 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
+                                      title="Delete reply"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </button>
+                                  )}
+                                </div>
+                                <p className="text-edu-muted text-sm">{reply.content}</p>
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     ) : (
                       <p className="text-edu-muted text-sm mb-4">No replies yet. Be the first to help!</p>

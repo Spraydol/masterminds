@@ -1118,6 +1118,30 @@ def delete_post():
         'message': 'Post deleted successfully'
     })
 
+@app.route('/api/community/reply/<int:reply_id>', methods=['DELETE'])
+def delete_reply(reply_id):
+    user_id = request.args.get('user_id')
+    
+    if not user_id:
+        return jsonify({'success': False, 'message': 'User ID is required'}), 400
+    
+    reply = CommunityReply.query.get(reply_id)
+    if not reply:
+        return jsonify({'success': False, 'message': 'Reply not found'}), 404
+    
+    # Check if user is the author of the reply OR the author of the post
+    post = CommunityPost.query.get(reply.post_id)
+    if reply.author_id != int(user_id) and post.author_id != int(user_id):
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+    
+    db.session.delete(reply)
+    db.session.commit()
+    
+    return jsonify({
+        'success': True,
+        'message': 'Reply deleted successfully'
+    })
+
 # ==================== AI CHAT ROUTES ====================
 
 @app.route('/api/ai/chat', methods=['POST'])
